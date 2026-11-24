@@ -6,9 +6,6 @@ import {
   Cpu,
   Eye,
   PackageCheck,
-  RotateCcw,
-  Shield,
-  Truck,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -341,29 +338,6 @@ export function ProductDetailPage({
               </pre>
             )}
           </div>
-
-          {/* Warranty, Dispatch & 7-Day Return Policy */}
-          <div className="pt-3.5 border-t border-slate-200 space-y-2.5 text-xs sm:text-[13px] text-slate-600">
-            <div className="flex items-start gap-2">
-              <Shield className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-              <p className="min-w-0">
-                <strong className="text-slate-900">Warranty:</strong> {product.warrantyInfo}
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <Truck className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-              <p className="min-w-0">
-                <strong className="text-slate-900">Dispatch:</strong> {product.shippingInfo}
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <RotateCcw className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
-              <p className="min-w-0">
-                <strong className="text-slate-900">7-Day Return Policy:</strong> Subject to unused
-                original condition, intact packaging, and published return eligibility conditions.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -424,23 +398,6 @@ export function ProductDetailPage({
               </h2>
             </div>
             <p className="text-sm text-slate-700 leading-relaxed">{product.compatibility}</p>
-          </section>
-
-          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">Warranty &amp; Returns</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{product.warrantyInfo}</p>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Returns within 7 days of delivery require unused original condition, complete box
-                contents, and prior WhatsApp inspection approval.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-slate-200">
-              <h3 className="text-sm font-bold text-slate-900 mb-1">
-                Shipping across Pakistan
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{product.shippingInfo}</p>
-            </div>
           </section>
 
           {/* Mobile Quick Bottom Inquiry Card after Specifications */}

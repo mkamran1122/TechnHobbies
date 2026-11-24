@@ -1,4 +1,5 @@
 import { ArrowRight, MessageCircle, RotateCcw, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { ResilientImage } from '../components/ResilientImage';
 import { HERO_IMAGE } from '../data/sampleCatalog';
@@ -20,6 +21,216 @@ interface HomePageProps {
     source: 'pdp' | 'card' | 'general';
   }) => void;
   onUnconfiguredWhatsApp: (previewMessage: string) => void;
+}
+
+const CATEGORY_SLIDER_PX_PER_SEC = 24;
+
+function CategoryTile({
+  category,
+  onSelect,
+  className = '',
+  tabIndex,
+}: {
+  category: Category;
+  onSelect: () => void;
+  className?: string;
+  tabIndex?: number;
+}) {
+  return (
+    <button
+      type="button"
+      tabIndex={tabIndex}
+      onClick={onSelect}
+      className={`bg-white border border-slate-200 rounded-lg overflow-hidden text-left hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-orange-600 flex flex-col min-w-0 ${className}`}
+    >
+      <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden shrink-0">
+        <div className="absolute inset-0">
+          <ResilientImage
+            src={category.image}
+            alt={category.name}
+            fallbackLabel={category.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+      <div className="p-2.5 sm:p-3">
+        <h3 className="text-[13px] sm:text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
+          {category.name}
+        </h3>
+      </div>
+    </button>
+  );
+}
+
+function MobileCategorySlider({
+  categories,
+  onSelectCategory,
+}: {
+  categories: Category[];
+  onSelectCategory: (categoryId: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const primarySetRef = useRef<HTMLDivElement | null>(null);
+  const secondarySetRef = useRef<HTMLDivElement | null>(null);
+  const virtualScrollRef = useRef(0);
+  const isPausedRef = useRef(false);
+  const resumeTimerRef = useRef<number | null>(null);
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 639px)').matches : true
+  );
+
+  useEffect(() => {
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mobileMq = window.matchMedia('(max-width: 639px)');
+
+    const onMotionChange = () => setPrefersReducedMotion(motionMq.matches);
+    const onMobileChange = () => setIsMobileViewport(mobileMq.matches);
+
+    motionMq.addEventListener('change', onMotionChange);
+    mobileMq.addEventListener('change', onMobileChange);
+    return () => {
+      motionMq.removeEventListener('change', onMotionChange);
+      mobileMq.removeEventListener('change', onMobileChange);
+    };
+  }, []);
+
+  const shouldLoop = !prefersReducedMotion && isMobileViewport && categories.length > 1;
+
+  const getLoopWidth = useCallback(() => {
+    if (!primarySetRef.current || !secondarySetRef.current) return 0;
+    return Math.max(0, secondarySetRef.current.offsetLeft - primarySetRef.current.offsetLeft);
+  }, []);
+
+  const clearResumeTimer = useCallback(() => {
+    if (resumeTimerRef.current !== null) {
+      window.clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
+  const pauseAutoScroll = useCallback(() => {
+    clearResumeTimer();
+    isPausedRef.current = true;
+    if (scrollRef.current) {
+      virtualScrollRef.current = scrollRef.current.scrollLeft;
+    }
+  }, [clearResumeTimer]);
+
+  const scheduleResume = useCallback(
+    (delayMs = 1800) => {
+      clearResumeTimer();
+      resumeTimerRef.current = window.setTimeout(() => {
+        if (scrollRef.current) {
+          virtualScrollRef.current = scrollRef.current.scrollLeft;
+        }
+        isPausedRef.current = false;
+      }, delayMs);
+    },
+    [clearResumeTimer]
+  );
+
+  useEffect(() => {
+    return () => clearResumeTimer();
+  }, [clearResumeTimer]);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || !shouldLoop) return;
+
+    virtualScrollRef.current = container.scrollLeft;
+    let rafId = 0;
+    let lastTimestamp = performance.now();
+
+    const step = (now: number) => {
+      const dtMs = Math.min(64, Math.max(0, now - lastTimestamp));
+      lastTimestamp = now;
+
+      if (!isPausedRef.current && !document.hidden) {
+        const loopWidth = getLoopWidth();
+        if (loopWidth > 0) {
+          virtualScrollRef.current += (CATEGORY_SLIDER_PX_PER_SEC * dtMs) / 1000;
+          if (virtualScrollRef.current >= loopWidth) {
+            virtualScrollRef.current -= loopWidth;
+          }
+          container.scrollLeft = virtualScrollRef.current;
+        }
+      }
+
+      rafId = window.requestAnimationFrame(step);
+    };
+
+    rafId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [shouldLoop, categories.length, getLoopWidth]);
+
+  const handleScroll = () => {
+    const container = scrollRef.current;
+    if (!container || !shouldLoop) return;
+
+    const loopWidth = getLoopWidth();
+    if (loopWidth > 0 && container.scrollLeft >= loopWidth) {
+      container.scrollLeft -= loopWidth;
+      virtualScrollRef.current = container.scrollLeft;
+    } else if (isPausedRef.current) {
+      virtualScrollRef.current = container.scrollLeft;
+    }
+  };
+
+  return (
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      onTouchStart={pauseAutoScroll}
+      onTouchEnd={() => scheduleResume(1800)}
+      onTouchCancel={() => scheduleResume(1800)}
+      onPointerDown={pauseAutoScroll}
+      onPointerUp={() => scheduleResume(1800)}
+      onPointerCancel={() => scheduleResume(1800)}
+      onMouseEnter={pauseAutoScroll}
+      onMouseLeave={() => scheduleResume(600)}
+      onFocusCapture={pauseAutoScroll}
+      onBlurCapture={() => scheduleResume(600)}
+      onWheel={() => {
+        pauseAutoScroll();
+        scheduleResume(1800);
+      }}
+      aria-label="Browse categories"
+      className="sm:hidden -mx-3 px-3 py-0.5 overflow-x-auto no-scrollbar"
+    >
+      <div className="flex gap-3 w-max">
+        <div ref={primarySetRef} className="flex gap-3 shrink-0">
+          {categories.map((category) => (
+            <CategoryTile
+              key={category.id}
+              category={category}
+              onSelect={() => onSelectCategory(category.id)}
+              className="w-[42vw] min-w-[154px] max-w-[184px] shrink-0"
+            />
+          ))}
+        </div>
+
+        {shouldLoop && (
+          <div ref={secondarySetRef} aria-hidden="true" className="flex gap-3 shrink-0">
+            {categories.map((category) => (
+              <CategoryTile
+                key={`${category.id}-loop`}
+                category={category}
+                tabIndex={-1}
+                onSelect={() => onSelectCategory(category.id)}
+                className="w-[42vw] min-w-[154px] max-w-[184px] shrink-0"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function HomePage({
@@ -110,7 +321,7 @@ export function HomePage({
         </div>
       </section>
 
-      {/* 5. Simple Categories Section (ONLY Category Image + Category Title) */}
+      {/* 5. Simple Categories Section (Mobile Auto-Slider + Unchanged Desktop Grid) */}
       <section className="border-t border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10">
           <div className="flex items-center justify-between gap-3 mb-3.5 sm:mb-6">
@@ -127,30 +338,15 @@ export function HomePage({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+          <MobileCategorySlider categories={categories} onSelectCategory={onSelectCategory} />
+
+          <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {categories.map((category) => (
-              <button
+              <CategoryTile
                 key={category.id}
-                type="button"
-                onClick={() => onSelectCategory(category.id)}
-                className="bg-white border border-slate-200 rounded-lg overflow-hidden text-left hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-orange-600 flex flex-col min-w-0"
-              >
-                <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden shrink-0">
-                  <div className="absolute inset-0">
-                    <ResilientImage
-                      src={category.image}
-                      alt={category.name}
-                      fallbackLabel={category.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="p-2.5 sm:p-3">
-                  <h3 className="text-[13px] sm:text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
-                    {category.name}
-                  </h3>
-                </div>
-              </button>
+                category={category}
+                onSelect={() => onSelectCategory(category.id)}
+              />
             ))}
           </div>
         </div>

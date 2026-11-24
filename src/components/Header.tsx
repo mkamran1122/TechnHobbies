@@ -57,12 +57,7 @@ export function Header({
 
   return (
     <>
-      {/* 1. Simple Announcement Bar (scrolls naturally so sticky header stays <= 10% of mobile viewport) */}
-      <div className="bg-slate-900 text-slate-100 text-[11px] sm:text-xs text-center px-3 py-1.5 leading-snug">
-        Direct WhatsApp Inquiries · 7-Day Return Policy (Terms Apply)
-      </div>
-
-      {/* 2. Compact Sticky Mobile-First Header */}
+      {/* 1. Compact Sticky Mobile-First Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200">
         <header className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
           {/* Brand Logo & Wordmark */}

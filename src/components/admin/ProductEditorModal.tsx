@@ -43,7 +43,7 @@ export function ProductEditorModal({
   const [sku, setSku] = useState(initialProduct?.sku || '');
   const [brandId, setBrandId] = useState(initialProduct?.brandId || brands[0]?.id || '');
   const [categoryId, setCategoryId] = useState(
-    initialProduct?.categoryId || categories[0]?.id || ''
+    initialProduct ? initialProduct.categoryId : categories[0]?.id || ''
   );
   const [price, setPrice] = useState<string>(
     initialProduct ? String(initialProduct.price) : ''
@@ -79,14 +79,6 @@ export function ProductEditorModal({
     initialProduct?.whatsInBox.join('\n') || ''
   );
   const [compatibility, setCompatibility] = useState(initialProduct?.compatibility || '');
-  const [warrantyInfo, setWarrantyInfo] = useState(
-    initialProduct?.warrantyInfo ||
-      '14-day TechnHobbies bench-verified DOA inspection coverage.'
-  );
-  const [shippingInfo, setShippingInfo] = useState(
-    initialProduct?.shippingInfo ||
-      'Insured nationwide courier dispatch across Pakistan within 24–48 business hours.'
-  );
   const [variants, setVariants] = useState<ProductVariant[]>(
     initialProduct?.variants || []
   );
@@ -180,8 +172,6 @@ export function ProductEditorModal({
       specs: cleanSpecs,
       whatsInBox: cleanBox,
       compatibility: compatibility.trim() || 'Confirm compatibility via WhatsApp inquiry.',
-      warrantyInfo: warrantyInfo.trim(),
-      shippingInfo: shippingInfo.trim(),
       variants: cleanVariants,
       updatedAt: new Date().toISOString().slice(0, 10),
     });
@@ -260,6 +250,9 @@ export function ProductEditorModal({
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
               >
+                {!categories.some((cat) => cat.id === categoryId) && (
+                  <option value="">Unassigned Category</option>
+                )}
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -643,7 +636,7 @@ export function ProductEditorModal({
             ))}
           </div>
 
-          {/* Box Contents, Compatibility, Warranty, Shipping */}
+          {/* Box Contents & Compatibility */}
           <div className="pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -666,28 +659,6 @@ export function ProductEditorModal({
                 value={compatibility}
                 onChange={(e) => setCompatibility(e.target.value)}
                 placeholder="Supported LiPo cells, connectors, or receivers..."
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Warranty Information
-              </label>
-              <input
-                type="text"
-                value={warrantyInfo}
-                onChange={(e) => setWarrantyInfo(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Shipping &amp; Dispatch Info
-              </label>
-              <input
-                type="text"
-                value={shippingInfo}
-                onChange={(e) => setShippingInfo(e.target.value)}
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
               />
             </div>

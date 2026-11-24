@@ -14,6 +14,68 @@ import type {
 } from '../types/catalog';
 
 const STORAGE_KEY = 'technhobbies_catalog_state_v1';
+const TAXONOMY_MIGRATION_KEY = 'technhobbies_taxonomy_v2_migrated';
+
+const NEW_RC_CATEGORY_IDS = [
+  'cat-rc-trucks',
+  'cat-rc-buggy',
+  'cat-rc-drift',
+  'cat-rc-crawler',
+  'cat-rc-engine-car',
+  'cat-rc-car-shells',
+] as const;
+
+function isLegacyCarsCategory(cat: Category): boolean {
+  return (
+    cat.id === 'cat-cars' ||
+    cat.slug === 'rc-cars-crawlers' ||
+    cat.name.trim().toLowerCase() === 'rc cars & crawlers'
+  );
+}
+
+function inferNewRcCategoryId(product: Product): string {
+  const titleSummary = `${product.name} ${product.shortDescription}`;
+  if (
+    /\b(body\s*shell|car\s*shell|clear\s*body|lexan\s*body|polycarbonate\s*body|unpainted\s*body|shells?)\b/i.test(
+      titleSummary
+    )
+  ) {
+    return 'cat-rc-car-shells';
+  }
+
+  const fullText = [
+    product.name,
+    product.shortDescription,
+    product.description,
+    ...(product.specs || []).map((s) => `${s.label} ${s.value}`),
+  ].join(' ');
+
+  if (
+    /\b(nitro|gasoline|petrol|gas-powered|2-stroke|glow\s*plug|cc\s*engine|engine\s*car)\b/i.test(
+      fullText
+    )
+  ) {
+    return 'cat-rc-engine-car';
+  }
+  if (/\b(crawler|rock\s*crawler|trail\s*crawler|portal\s*axle)\b/i.test(fullText)) {
+    return 'cat-rc-crawler';
+  }
+  if (/\b(drift|drifting)\b/i.test(fullText)) {
+    return 'cat-rc-drift';
+  }
+  if (/\b(buggy|buggies)\b/i.test(fullText)) {
+    return 'cat-rc-buggy';
+  }
+  if (
+    /\b(monster\s*truck|truggy|short\s*course|stadium\s*truck|desert\s*truck|rc\s*truck|trucks?)\b/i.test(
+      fullText
+    )
+  ) {
+    return 'cat-rc-trucks';
+  }
+
+  return '';
+}
 
 /**
  * Modular Catalog Repository Interface.
@@ -60,9 +122,62 @@ class LocalSampleCatalogService implements ICatalogService {
       const cachedBusinessNumber = parsed.whatsappConfig?.businessNumber?.trim();
       const cachedContactEmail = parsed.storeSettings?.contactEmail?.trim();
       const cachedCityBase = parsed.storeSettings?.cityBase;
-      return {
+
+      let categories = Array.isArray(parsed.categories)
+        ? parsed.categories
+        : INITIAL_CATALOG_STATE.categories;
+      let products = Array.isArray(parsed.products)
+        ? parsed.products
+        : INITIAL_CATALOG_STATE.products;
+
+      const hasLegacyCarsCat = categories.some(isLegacyCarsCategory);
+      const alreadyMigrated = window.localStorage.getItem(TAXONOMY_MIGRATION_KEY) === '1';
+
+      if (hasLegacyCarsCat || !alreadyMigrated) {
+        const legacyIds = new Set(categories.filter(isLegacyCarsCategory).map((c) => c.id));
+        legacyIds.add('cat-cars');
+
+        const cleanedCategories = categories.filter((c) => !isLegacyCarsCategory(c));
+        const newCategoryTemplates = INITIAL_CATALOG_STATE.categories.filter((c) =>
+          (NEW_RC_CATEGORY_IDS as readonly string[]).includes(c.id)
+        );
+        const missingNewCategories = newCategoryTemplates.filter(
+          (tmpl) =>
+            !cleanedCategories.some(
+              (existing) =>
+                existing.id === tmpl.id ||
+                existing.name.trim().toLowerCase() === tmpl.name.trim().toLowerCase()
+            )
+        );
+
+        categories = [...missingNewCategories, ...cleanedCategories];
+
+        const categoryIdByName = new Map(
+          categories.map((c) => [c.name.trim().toLowerCase(), c.id])
+        );
+
+        products = products.map((product) => {
+          const { warrantyInfo: _w, shippingInfo: _s, ...rest } = product;
+          if (!legacyIds.has(product.categoryId)) {
+            return rest;
+          }
+          const inferredId = inferNewRcCategoryId(product);
+          const matchedTemplate = newCategoryTemplates.find((c) => c.id === inferredId);
+          const resolvedId = matchedTemplate
+            ? categoryIdByName.get(matchedTemplate.name.trim().toLowerCase()) || matchedTemplate.id
+            : '';
+          return {
+            ...rest,
+            categoryId: resolvedId,
+          };
+        });
+      }
+
+      const hydrated: CatalogStoreState = {
         ...INITIAL_CATALOG_STATE,
         ...parsed,
+        categories,
+        products,
         whatsappConfig: {
           ...INITIAL_CATALOG_STATE.whatsappConfig,
           ...(parsed.whatsappConfig || {}),
@@ -82,6 +197,13 @@ class LocalSampleCatalogService implements ICatalogService {
           },
         },
       };
+
+      if (hasLegacyCarsCat || !alreadyMigrated) {
+        this.saveState(hydrated);
+        window.localStorage.setItem(TAXONOMY_MIGRATION_KEY, '1');
+      }
+
+      return hydrated;
     } catch {
       return INITIAL_CATALOG_STATE;
     }
@@ -102,6 +224,7 @@ class LocalSampleCatalogService implements ICatalogService {
   resetToSampleData(): CatalogStoreState {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.setItem(TAXONOMY_MIGRATION_KEY, '1');
       this.lastStorageWarning = null;
     } catch {
       // Ignore storage errors

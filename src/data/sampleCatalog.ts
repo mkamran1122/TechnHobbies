@@ -3,7 +3,12 @@ import { DEFAULT_WHATSAPP_TEMPLATE } from '../config/whatsapp';
 
 export const HERO_IMAGE = '/src/assets/images/hero_rc_workshop_1795456013906.jpg';
 
+const IMG_TRUCKS = '/src/assets/images/cat_rc_trucks_1795538953459.jpg';
+const IMG_BUGGY = '/src/assets/images/cat_rc_buggy_1795538954874.jpg';
+const IMG_DRIFT = '/src/assets/images/cat_rc_drift_1795538954812.jpg';
 const IMG_CRAWLER = '/src/assets/images/prod_rc_crawler_1795456014287.jpg';
+const IMG_ENGINE_CAR = '/src/assets/images/cat_rc_engine_car_1795538955453.jpg';
+const IMG_CAR_SHELLS = '/src/assets/images/cat_rc_car_shells_1795538955515.jpg';
 const IMG_DRONE = '/src/assets/images/prod_fpv_drone_1795456014097.jpg';
 const IMG_AIRPLANE = '/src/assets/images/prod_rc_airplane_1795456013593.jpg';
 const IMG_HELI = '/src/assets/images/prod_rc_helicopter_1795456013966.jpg';
@@ -14,11 +19,51 @@ const IMG_MOTOR = '/src/assets/images/prod_brushless_combo_1795456013819.jpg';
 export const INITIAL_CATALOG_STATE: CatalogStoreState = {
   categories: [
     {
-      id: 'cat-cars',
-      slug: 'rc-cars-crawlers',
-      name: 'RC Cars & Crawlers',
-      description: '1/10 & 1/8 scale brushless bashers, desert trucks, and trail rock crawlers engineered for rugged terrain.',
+      id: 'cat-rc-trucks',
+      slug: 'rc-trucks',
+      name: 'RC Trucks',
+      description: '1/10 & 1/8 scale brushless monster trucks, truggies, and high-speed off-road bashers.',
+      image: IMG_TRUCKS,
+      featured: true,
+    },
+    {
+      id: 'cat-rc-buggy',
+      slug: 'rc-buggy',
+      name: 'RC Buggy',
+      description: '4WD off-road racing buggies with low-profile aerodynamics and track-tuned suspension.',
+      image: IMG_BUGGY,
+      featured: true,
+    },
+    {
+      id: 'cat-rc-drift',
+      slug: 'rc-drift',
+      name: 'RC Drift',
+      description: '1/10 scale drift chassis and precision counter-steer coupes built for smooth asphalt slides.',
+      image: IMG_DRIFT,
+      featured: true,
+    },
+    {
+      id: 'cat-rc-crawler',
+      slug: 'rc-crawler',
+      name: 'RC Crawler',
+      description: 'Portal-axle 4x4 trail rigs and technical rock crawlers engineered for rugged terrain.',
       image: IMG_CRAWLER,
+      featured: true,
+    },
+    {
+      id: 'cat-rc-engine-car',
+      slug: 'rc-engine-car',
+      name: 'RC Engine Car',
+      description: 'Nitro and petrol engine-powered RC vehicles with tuned exhaust systems and alloy chassis.',
+      image: IMG_ENGINE_CAR,
+      featured: true,
+    },
+    {
+      id: 'cat-rc-car-shells',
+      slug: 'rc-car-shells',
+      name: 'RC Car Shells',
+      description: 'Clear unpainted lexan and pre-painted polycarbonate RC body shells across 1/10 & 1/8 scales.',
+      image: IMG_CAR_SHELLS,
       featured: true,
     },
     {
@@ -86,7 +131,7 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
       slug: 'trailfinder-overland-4x4-rtr',
       name: 'TrailFinder Overland 1/10 Scale 4x4 Rock Crawler RTR',
       brandId: 'brand-axial',
-      categoryId: 'cat-cars',
+      categoryId: 'cat-rc-crawler',
       sku: 'TH-CRAWL-1044',
       price: 118500,
       originalPrice: 132000,
@@ -116,8 +161,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'Hex Tool Driver, Spare Body Clips & Illustrated Manual',
       ],
       compatibility: 'Compatible with standard 2S (7.4V) or 3S (11.1V) Hardcase/Softpack LiPo batteries fitted with XT60 connectors and 1.9-inch aftermarket beadlock wheels.',
-      warrantyInfo: '14-day TechnHobbies dead-on-arrival inspection coverage plus manufacturer hardware defect support for electronics.',
-      shippingInfo: 'Dispatched from our Lahore hub within 24 business hours via insured TCS / Leopards courier across Islamabad, Rawalpindi, Karachi, Multan, and Peshawar.',
       variants: [
         { id: 'v-1a', group: 'Edition', label: 'RTR (No Battery / Charger)', priceDelta: 0, skuSuffix: '-RTR', inStock: true },
         { id: 'v-1b', group: 'Edition', label: 'RTR + 3S 5000mAh LiPo Combo', priceDelta: 14500, skuSuffix: '-3SC', inStock: true },
@@ -129,7 +172,7 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
       slug: 'kraton-6s-blx-speed-monster-truck',
       name: 'Kraton 6S BLX 1/8 Brushless Speed Truggy RTR',
       brandId: 'brand-arrma',
-      categoryId: 'cat-cars',
+      categoryId: 'cat-rc-trucks',
       sku: 'TH-BASH-6080',
       price: 179000,
       originalPrice: 195000,
@@ -157,8 +200,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'Optional High-Speed Pinion Gear & Wheel Wrench',
       ],
       compatibility: 'Requires 4S (14.8V) or 6S (22.2V) 5000mAh+ 50C+ LiPo packs with EC5/IC5 connector (or XT90 adapter) and balance charger.',
-      warrantyInfo: 'Verified genuine unit with TechnHobbies bench test before dispatch and spare-parts sourcing guarantee.',
-      shippingInfo: 'Protected heavy-parcel shipping nationwide across Pakistan (2–4 working days delivery).',
       variants: [
         { id: 'v-2a', group: 'Livery', label: 'Navy / Safety Orange', priceDelta: 0, skuSuffix: '-NVY', inStock: true },
         { id: 'v-2b', group: 'Livery', label: 'Stealth Matte Charcoal', priceDelta: 0, skuSuffix: '-BLK', inStock: true },
@@ -198,8 +239,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'Action Camera TPU Mount & 2× Battery Straps',
       ],
       compatibility: 'Binds directly with any ExpressLRS 2.4GHz transmitter (RadioMaster Boxer, TX16S, Pocket). Recommended 6S 1300mAh–1550mAh 100C+ LiPo with XT60.',
-      warrantyInfo: 'Pre-flight hover & motor spin check performed before shipping; FC/ESC covered against factory DOA.',
-      shippingInfo: 'Foam-padded anti-static dispatch across Pakistan within 24 hours.',
       variants: [
         { id: 'v-3a', group: 'Receiver', label: 'ELRS 2.4GHz (6S)', priceDelta: 0, skuSuffix: '-ELRS', inStock: true },
         { id: 'v-3b', group: 'Receiver', label: 'TBS Crossfire 915MHz (6S)', priceDelta: 7500, skuSuffix: '-CRSF', inStock: true },
@@ -239,8 +278,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'Tricycle Landing Gear with Steerable Nose Wheel & 10×6 Propeller',
       ],
       compatibility: 'Plug-and-Play (PNP): requires your own 6-channel transmitter/receiver and a 3S 11.1V 2200mAh–2600mAh LiPo battery.',
-      warrantyInfo: '14-day electronics inspection warranty; replacement propellers, cowls, and wing sets stocked locally.',
-      shippingInfo: 'Oversized reinforced carton courier delivery to all major Pakistani cities.',
       variants: [
         { id: 'v-4a', group: 'Config', label: 'PNP (Airframe + Motor/ESC/Servos)', priceDelta: 0, skuSuffix: '-PNP', inStock: true },
         { id: 'v-4b', group: 'Config', label: 'PNP + 3-Axis Flight Gyro Stabilizer', priceDelta: 6500, skuSuffix: '-GYR', inStock: true },
@@ -277,8 +314,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         '460MX Motor, 45A ESC & 4× Digital Servos',
       ],
       compatibility: 'Requires a 6-channel+ helicopter transmitter/receiver, flybarless gyro controller (if selected without FBL), and 6S LiPo pack.',
-      warrantyInfo: 'TechnHobbies parts support for main gears, feathering shafts, booms, and blades.',
-      shippingInfo: 'Secure custom-foam boxed delivery within 2–3 business days nationwide.',
       variants: [
         { id: 'v-5a', group: 'Package', label: 'Airframe + Power Combo (No FBL)', priceDelta: 0, skuSuffix: '-STD', inStock: true },
         { id: 'v-5b', group: 'Package', label: 'Complete with MicroBeast FBL Unit', priceDelta: 24000, skuSuffix: '-FBL', inStock: true },
@@ -318,8 +353,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'USB-C Data/Charge Cable, Neck Strap & 18650 Battery Tray',
       ],
       compatibility: 'Compatible with all ExpressLRS 2.4GHz receivers (EP1, EP2, RP1, ER6, ER8) and supports simulator connection via USB-C.',
-      warrantyInfo: '14-day replacement guarantee for gimbal or RF defects; official firmware pre-flashed.',
-      shippingInfo: 'Same-day dispatch before 4:00 PM PKT with insured courier tracking.',
       variants: [
         { id: 'v-6a', group: 'Mode', label: 'Mode 2 (Left Throttle - Standard)', priceDelta: 0, skuSuffix: '-M2', inStock: true },
         { id: 'v-6b', group: 'Mode', label: 'Mode 2 + ER6 PWM Airplane Receiver', priceDelta: 6200, skuSuffix: '-ER6', inStock: true },
@@ -358,8 +391,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         'User Guide & Screen Protector',
       ],
       compatibility: 'Works natively with XT60 LiPo packs (1S–6S). Banana-to-EC5/Deans/XT90 charge leads available separately.',
-      warrantyInfo: '30-day TechnHobbies electronics warranty against calibration or power-stage faults.',
-      shippingInfo: 'In stock for immediate dispatch across Pakistan.',
       variants: [
         { id: 'v-7a', group: 'Bundle', label: 'Charger Only', priceDelta: 0, skuSuffix: '-UNIT', inStock: true },
         { id: 'v-7b', group: 'Bundle', label: 'Charger + 4S 5000mAh 65C XT60 Pack', priceDelta: 15800, skuSuffix: '-BUND', inStock: true },
@@ -394,8 +425,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
       ],
       whatsInBox: ['Graphene 4S 5000mAh Hardcase LiPo Battery', 'Rubberized XT60 Terminal Cap'],
       compatibility: 'Fits standard 1/10 & 1/8 basher and crawler battery trays.',
-      warrantyInfo: 'Cell-voltage & internal resistance verified on video upon request prior to courier handoff.',
-      shippingInfo: 'Dispatched via ground courier compliant with battery packaging standards.',
       variants: [
         { id: 'v-8a', group: 'Connector', label: 'XT60 Connector', priceDelta: 0, skuSuffix: '-XT60', inStock: true },
         { id: 'v-8b', group: 'Connector', label: 'XT90 Connector', priceDelta: 450, skuSuffix: '-XT90', inStock: true },
@@ -434,8 +463,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
         '3M Mounting Tape & Pinion Hardware',
       ],
       compatibility: 'Drop-in upgrade for 1/10 Slash, Rustler, Stampede, Granite, and Senton chassis using 5mm-bore pinions.',
-      warrantyInfo: '14-day bench test warranty against manufacturing defects.',
-      shippingInfo: 'Nationwide express shipping within 24–48 hours.',
       variants: [
         { id: 'v-9a', group: 'KV Rating', label: '3200KV (3S–4S Torque)', priceDelta: 0, skuSuffix: '-3200', inStock: true },
         { id: 'v-9b', group: 'KV Rating', label: '4000KV (2S–3S High RPM)', priceDelta: 0, skuSuffix: '-4000', inStock: true },
@@ -468,8 +495,6 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
       ],
       whatsInBox: ['ER8 2.4GHz Receiver', 'Voltage Telemetry Wire & CRSF Lead', 'Dual 20cm T-Antennas'],
       compatibility: 'Works with any ExpressLRS 2.4GHz transmitter (RadioMaster Boxer, TX16S, Zorro, Pocket).',
-      warrantyInfo: '7-day bench binding verification guarantee.',
-      shippingInfo: 'Lightweight parcel dispatch nationwide.',
       variants: [],
       updatedAt: '2026-11-14',
     },

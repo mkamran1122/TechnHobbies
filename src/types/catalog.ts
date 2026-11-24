@@ -38,8 +38,8 @@ export interface Product {
   specs: ProductSpec[];
   whatsInBox: string[];
   compatibility: string;
-  warrantyInfo: string;
-  shippingInfo: string;
+  warrantyInfo?: string;
+  shippingInfo?: string;
   variants: ProductVariant[];
   updatedAt: string;
 }
