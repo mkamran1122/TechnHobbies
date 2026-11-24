@@ -8,12 +8,15 @@ import {
   EyeOff,
   FolderTree,
   Globe,
+  LogOut,
+  MailCheck,
   MessageCircle,
   Package,
   Plus,
   RotateCcw,
   Search,
   ShieldAlert,
+  ShieldCheck,
   Star,
   Trash2,
 } from 'lucide-react';
@@ -61,6 +64,11 @@ interface AdminDashboardProps {
   onUpdateWhatsAppConfig: (config: WhatsAppConfig) => void;
   onUpdateStoreSettings: (settings: StoreSettings) => void;
   onResetSampleData: () => void;
+  adminEmail: string;
+  emailVerified: boolean;
+  onLogout: () => Promise<void> | void;
+  onSendVerification: () => Promise<void>;
+  onRefreshAuthUser: () => Promise<void>;
   storageWarning?: string | null;
 }
 
@@ -77,8 +85,16 @@ export function AdminDashboard({
   onUpdateWhatsAppConfig,
   onUpdateStoreSettings,
   onResetSampleData,
+  adminEmail,
+  emailVerified,
+  onLogout,
+  onSendVerification,
+  onRefreshAuthUser,
   storageWarning,
 }: AdminDashboardProps) {
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -178,16 +194,14 @@ export function AdminDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         {/* Sidebar Navigation (240px–260px feel on desktop) */}
         <aside className="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 space-y-4 min-w-0">
-          <div className="px-2 pb-3 border-b border-slate-200">
+          <div className="px-2 pb-3 border-b border-slate-200 space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-orange-700">
               Admin Console
             </p>
-            <h1 className="font-display text-lg font-bold text-slate-900 mt-0.5">
+            <h1 className="font-display text-lg font-bold text-slate-900">
               TechnHobbies Manager
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Local repository mode · Ready for future Firebase integration
-            </p>
+            <p className="text-xs text-slate-600 break-all">{adminEmail}</p>
           </div>
 
           <nav className="space-y-1" aria-label="Admin sections">
@@ -199,7 +213,7 @@ export function AdminDashboard({
                   key={item.id}
                   type="button"
                   onClick={() => onChangeTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
@@ -212,35 +226,104 @@ export function AdminDashboard({
             })}
           </nav>
 
-          <div className="pt-3 border-t border-slate-200">
+          <div className="pt-3 border-t border-slate-200 space-y-2">
             <button
               type="button"
               onClick={onResetSampleData}
-              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 min-h-[40px] text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset Sample Catalog</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={loggingOut}
+              onClick={async () => {
+                setLoggingOut(true);
+                try {
+                  await onLogout();
+                } finally {
+                  setLoggingOut(false);
+                }
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] text-xs font-semibold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
+              <span>{loggingOut ? 'Signing Out...' : 'Logout'}</span>
             </button>
           </div>
         </aside>
 
         {/* Main Workspace */}
         <div className="lg:col-span-9 space-y-6 min-w-0">
-          {/* Honest Auth & Local Persistence Notice */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-950">
-            <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-semibold">
-                Local Preview Console — Unauthenticated &amp; Single-Browser Storage
-              </p>
-              <p className="text-amber-900 leading-relaxed">
-                Admin access is currently open for local catalog preview without user login, and
-                all edits persist solely in this browser&apos;s <code className="font-mono">localStorage</code>{' '}
-                (no cross-device sync). Protect <code className="font-mono">/admin</code> with
-                Firebase Authentication and server-side security rules before deploying publicly.
-              </p>
+          {/* Firebase Auth & Server-Side Rules Status Notice */}
+          {emailVerified ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-xs text-emerald-950">
+              <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">
+                  Authenticated Admin Session ({adminEmail})
+                </p>
+                <p className="text-emerald-900 leading-relaxed">
+                  Firebase Email/Password Authentication is active and Firestore Security Rules
+                  (<code className="font-mono">firestore.rules</code>) enforce verified admin
+                  authorization on server-side Firestore operations. Current sample catalog edits
+                  persist locally in this browser&apos;s <code className="font-mono">localStorage</code>.
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-950">
+              <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-2 min-w-0 flex-1">
+                <p className="font-semibold">
+                  Email Verification Recommended for Server-Side Firestore Rules
+                </p>
+                <p className="text-amber-900 leading-relaxed">
+                  Signed in as <span className="font-mono">{adminEmail}</span>. Deployed Firestore
+                  Security Rules require <code className="font-mono">email_verified == true</code>{' '}
+                  for server-side Firestore writes to prevent email spoofing. Current sample catalog
+                  edits persist locally in <code className="font-mono">localStorage</code>.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setVerificationError(null);
+                      try {
+                        await onSendVerification();
+                        setVerificationSent(true);
+                      } catch (err) {
+                        setVerificationError(
+                          err instanceof Error ? err.message : 'Unable to send verification email.'
+                        );
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md"
+                  >
+                    <MailCheck className="w-3.5 h-3.5" />
+                    <span>Send Verification Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onRefreshAuthUser()}
+                    className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-amber-300 hover:bg-amber-100 rounded-md"
+                  >
+                    Refresh Verification Status
+                  </button>
+                  {verificationSent && (
+                    <span className="text-xs font-medium text-emerald-800">
+                      Verification email sent. Check your inbox.
+                    </span>
+                  )}
+                  {verificationError && (
+                    <span className="text-xs font-medium text-rose-700">{verificationError}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {storageWarning && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-xs text-rose-900">

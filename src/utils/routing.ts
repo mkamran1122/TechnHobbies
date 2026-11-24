@@ -72,7 +72,7 @@ export function parseLocation(pathname: string, search: string): ParsedRoute {
   if (cleanPath === '/terms') {
     return { route: 'terms', productSlug: null, categorySlug: null, searchQuery: '' };
   }
-  if (cleanPath === '/admin') {
+  if (cleanPath === '/admin' || cleanPath.startsWith('/admin/')) {
     return { route: 'admin', productSlug: null, categorySlug: null, searchQuery: '' };
   }
 

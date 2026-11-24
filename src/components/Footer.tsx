@@ -5,25 +5,21 @@ import {
   formatWhatsAppDisplayNumber,
   resolveEffectiveWhatsAppNumber,
 } from '../config/whatsapp';
-import type { Category, StoreSettings, WhatsAppConfig } from '../types/catalog';
+import type { StoreSettings, WhatsAppConfig } from '../types/catalog';
 import type { AppRoute } from '../utils/routing';
 import { sanitizeExternalUrl } from '../utils/url';
 
 interface FooterProps {
-  categories: Category[];
   storeSettings: StoreSettings;
   whatsappConfig: WhatsAppConfig;
   onNavigate: (route: AppRoute) => void;
-  onSelectCategory: (categoryId: string) => void;
   onUnconfiguredWhatsApp: (previewMessage: string) => void;
 }
 
 export function Footer({
-  categories,
   storeSettings,
   whatsappConfig,
   onNavigate,
-  onSelectCategory,
   onUnconfiguredWhatsApp,
 }: FooterProps) {
   const effectiveWhatsApp = resolveEffectiveWhatsAppNumber(whatsappConfig.businessNumber);
@@ -31,165 +27,139 @@ export function Footer({
   const whatsappUrl = buildWhatsAppClickToChatUrl(effectiveWhatsApp, generalMsg);
   const configuredEmail = storeSettings.contactEmail.trim();
 
+  const instagramUrl = sanitizeExternalUrl(storeSettings.socialLinks.instagram);
+  const youtubeUrl = sanitizeExternalUrl(storeSettings.socialLinks.youtube);
+  const facebookUrl = sanitizeExternalUrl(storeSettings.socialLinks.facebook);
+
   return (
-    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand & Contact */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
+    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
+        {/* Main Compact Bar: Left (Brand & Contact) · Center (Important Links) · Right (Social) */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-6">
+          {/* Left: Logo, WhatsApp & Email */}
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2">
               <img
                 src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
                 alt="TechnHobbies Logo"
-                className="w-10 h-10 object-contain bg-white rounded-md p-1 shrink-0"
+                className="w-7 h-7 object-contain bg-white rounded p-0.5 shrink-0"
               />
-              <div>
-                <p className="font-display text-base font-bold text-white">
-                  {storeSettings.storeName}
-                </p>
-                <p className="text-xs text-slate-400">{storeSettings.cityBase}</p>
-              </div>
+              <span className="font-display text-[15px] font-bold text-white leading-tight">
+                {storeSettings.storeName}
+              </span>
             </div>
 
-            <div className="space-y-2 pt-1 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-0.5 text-sm leading-snug">
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 font-medium text-orange-400 hover:text-orange-300"
+                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 font-medium text-orange-400 hover:text-orange-300"
                 >
-                  <MessageCircle className="w-4 h-4 shrink-0" />
-                  <span>WhatsApp: {formatWhatsAppDisplayNumber(effectiveWhatsApp)}</span>
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{formatWhatsAppDisplayNumber(effectiveWhatsApp)}</span>
                 </a>
               ) : (
                 <button
                   type="button"
                   onClick={() => onUnconfiguredWhatsApp(generalMsg)}
-                  className="inline-flex items-center gap-2 font-medium text-orange-400 hover:text-orange-300 text-left"
+                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 font-medium text-orange-400 hover:text-orange-300 text-left"
                 >
-                  <MessageCircle className="w-4 h-4 shrink-0" />
-                  <span>Official WhatsApp Support</span>
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>WhatsApp Support</span>
                 </button>
               )}
 
               {configuredEmail && (
-                <div>
-                  <a
-                    href={`mailto:${configuredEmail}`}
-                    className="inline-flex items-center gap-2 text-slate-300 hover:text-white break-all"
-                  >
-                    <Mail className="w-4 h-4 shrink-0" />
-                    <span>{configuredEmail}</span>
-                  </a>
-                </div>
+                <a
+                  href={`mailto:${configuredEmail}`}
+                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 text-slate-300 hover:text-white break-all"
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span>{configuredEmail}</span>
+                </a>
               )}
             </div>
           </div>
 
-          {/* Categories */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-3">Categories</h3>
-            <ul className="space-y-2 text-sm">
-              {categories.map((cat) => (
-                <li key={cat.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectCategory(cat.id)}
-                    className="text-slate-400 hover:text-white text-left"
-                  >
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Center: Important Links (2-col grid on mobile, inline row on desktop) */}
+          <nav
+            aria-label="Footer navigation"
+            className="grid grid-cols-2 gap-x-4 gap-y-1 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 text-sm leading-snug"
+          >
+            <button
+              type="button"
+              onClick={() => onNavigate('shop')}
+              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+            >
+              Shop
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('about')}
+              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+            >
+              About
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('privacy')}
+              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+            >
+              Privacy Policy
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('terms')}
+              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+            >
+              Return Policy
+            </button>
+          </nav>
 
-          {/* Store & Policies */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-3">Store &amp; Policies</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('shop')}
-                  className="text-slate-400 hover:text-white"
-                >
-                  All Products
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('about')}
-                  className="text-slate-400 hover:text-white"
-                >
-                  About TechnHobbies
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('privacy')}
-                  className="text-slate-400 hover:text-white"
-                >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('terms')}
-                  className="text-slate-400 hover:text-white text-left"
-                >
-                  Terms &amp; 7-Day Return Policy
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Social Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-white mb-3">Follow Us</h3>
-            <div className="flex flex-col gap-2 text-sm">
-              {sanitizeExternalUrl(storeSettings.socialLinks.instagram) && (
+          {/* Right: Social Media Links (single horizontal row on mobile & desktop) */}
+          {(instagramUrl || youtubeUrl || facebookUrl) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-snug lg:justify-end">
+              {instagramUrl && (
                 <a
-                  href={sanitizeExternalUrl(storeSettings.socialLinks.instagram)}
+                  href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
                 >
                   <span>Instagram</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3 h-3 shrink-0" />
                 </a>
               )}
-              {sanitizeExternalUrl(storeSettings.socialLinks.youtube) && (
+              {youtubeUrl && (
                 <a
-                  href={sanitizeExternalUrl(storeSettings.socialLinks.youtube)}
+                  href={youtubeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
                 >
                   <span>YouTube</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3 h-3 shrink-0" />
                 </a>
               )}
-              {sanitizeExternalUrl(storeSettings.socialLinks.facebook) && (
+              {facebookUrl && (
                 <a
-                  href={sanitizeExternalUrl(storeSettings.socialLinks.facebook)}
+                  href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
                 >
                   <span>Facebook</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3 h-3 shrink-0" />
                 </a>
               )}
             </div>
-          </div>
+          )}
         </div>
 
-        <div className="border-t border-slate-800 mt-8 pt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400">
+        {/* Slim Bottom Row: Copyright & MK Labs Credit */}
+        <div className="border-t border-slate-800 mt-2.5 pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[13px] leading-tight text-slate-400">
           <p>
             © {new Date().getFullYear()} {storeSettings.storeName}. A product by{' '}
             <a

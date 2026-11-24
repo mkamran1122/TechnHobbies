@@ -2,8 +2,10 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { WhatsAppNoticeModal } from './components/WhatsAppModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { useSEO } from './hooks/useSEO';
 import type { AdminTab } from './pages/AdminDashboard';
+import { AdminLoginPage } from './pages/AdminLoginPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { HomePage } from './pages/HomePage';
 import { InfoPage } from './pages/InfoPages';
@@ -33,7 +35,18 @@ const DEFAULT_FILTERS: ShopFilterState = {
   sortBy: 'featured',
 };
 
-export default function App() {
+function AppContent() {
+  const {
+    user,
+    isAdmin,
+    authLoading,
+    authNotice,
+    clearAuthNotice,
+    logoutAdmin,
+    sendVerification,
+    refreshUser,
+  } = useAuth();
+
   const [state, setState] = useState<CatalogStoreState>(() => catalogService.loadState());
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
 
@@ -59,6 +72,17 @@ export default function App() {
   });
   const [adminTab, setAdminTab] = useState<AdminTab>('overview');
   const [waModalMessage, setWaModalMessage] = useState<string | null>(null);
+
+  // Redirect unauthorized non-admin sessions away from /admin
+  useEffect(() => {
+    if (!authLoading && route === 'admin' && authNotice && (!user || !isAdmin)) {
+      setRoute('home');
+      setSelectedProductSlug(null);
+      if (window.location.pathname !== '/') {
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, [authLoading, route, authNotice, user, isAdmin]);
 
   // Sync browser Back/Forward history navigation
   useEffect(() => {
@@ -190,7 +214,7 @@ export default function App() {
     }
     if (route === 'admin') {
       return {
-        title: `Admin Console | ${brandName}`,
+        title: isAdmin ? `Admin Console | ${brandName}` : `Admin Sign In | ${brandName}`,
         description: state.storeSettings.seoDescription,
         noIndex: true,
       };
@@ -200,7 +224,7 @@ export default function App() {
       description: state.storeSettings.seoDescription,
       noIndex: false,
     };
-  }, [route, activeProduct, activeShopCategory, state.storeSettings]);
+  }, [route, activeProduct, activeShopCategory, state.storeSettings, isAdmin]);
 
   useSEO({
     title: seoMeta.title,
@@ -225,6 +249,9 @@ export default function App() {
 
   const handleNavigate = useCallback(
     (nextRoute: AppRoute) => {
+      if (nextRoute !== 'home') {
+        clearAuthNotice();
+      }
       setRoute(nextRoute);
       if (nextRoute !== 'product') {
         setSelectedProductSlug(null);
@@ -240,7 +267,7 @@ export default function App() {
         })
       );
     },
-    [state.categories]
+    [state.categories, clearAuthNotice]
   );
 
   const handleSelectProduct = useCallback((slug: string) => {
@@ -323,32 +350,55 @@ export default function App() {
     []
   );
 
-  // Admin mutation handlers
-  const handleUpsertProduct = (product: Product) =>
+  const handleAdminLogout = useCallback(async () => {
+    await logoutAdmin();
+    setRoute('home');
+    pushPath('/');
+  }, [logoutAdmin]);
+
+  // Admin mutation handlers (guarded to authenticated admin session)
+  const handleUpsertProduct = (product: Product) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.upsertProduct(prev, product));
+  };
 
-  const handleDeleteProduct = (productId: string) =>
+  const handleDeleteProduct = (productId: string) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.deleteProduct(prev, productId));
+  };
 
-  const handleUpsertCategory = (category: Category) =>
+  const handleUpsertCategory = (category: Category) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.upsertCategory(prev, category));
+  };
 
-  const handleDeleteCategory = (categoryId: string) =>
+  const handleDeleteCategory = (categoryId: string) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.deleteCategory(prev, categoryId));
+  };
 
-  const handleUpsertBrand = (brand: Brand) =>
+  const handleUpsertBrand = (brand: Brand) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.upsertBrand(prev, brand));
+  };
 
-  const handleDeleteBrand = (brandId: string) =>
+  const handleDeleteBrand = (brandId: string) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.deleteBrand(prev, brandId));
+  };
 
-  const handleUpdateWhatsAppConfig = (config: WhatsAppConfig) =>
+  const handleUpdateWhatsAppConfig = (config: WhatsAppConfig) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.updateWhatsAppConfig(prev, config));
+  };
 
-  const handleUpdateStoreSettings = (settings: StoreSettings) =>
+  const handleUpdateStoreSettings = (settings: StoreSettings) => {
+    if (!isAdmin) return;
     applyMutation((prev) => catalogService.updateStoreSettings(prev, settings));
+  };
 
   const handleResetSampleData = () => {
+    if (!isAdmin) return;
     setState(catalogService.resetToSampleData());
     setStorageWarning(null);
   };
@@ -361,6 +411,24 @@ export default function App() {
         onNavigate={handleNavigate}
         onSearchSubmit={handleSearchSubmit}
       />
+
+      {authNotice && route !== 'admin' && (
+        <div
+          role="alert"
+          className="bg-rose-50 border-b border-rose-200 px-3 sm:px-6 py-2.5 text-xs text-rose-900"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <p className="font-medium">{authNotice}</p>
+            <button
+              type="button"
+              onClick={clearAuthNotice}
+              className="font-semibold text-rose-800 hover:text-rose-950 shrink-0 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         {route === 'home' && (
@@ -441,7 +509,20 @@ export default function App() {
           />
         )}
 
-        {route === 'admin' && (
+        {route === 'admin' && authLoading && (
+          <div className="max-w-md mx-auto px-4 py-16 text-center text-sm text-slate-600">
+            Verifying administrator session...
+          </div>
+        )}
+
+        {route === 'admin' && !authLoading && (!user || !isAdmin) && (
+          <AdminLoginPage
+            notice={authNotice}
+            onBackToStorefront={() => handleNavigate('home')}
+          />
+        )}
+
+        {route === 'admin' && !authLoading && user && isAdmin && (
           <Suspense
             fallback={
               <div className="max-w-7xl mx-auto px-4 py-12 text-center text-sm text-slate-600">
@@ -462,6 +543,11 @@ export default function App() {
               onUpdateWhatsAppConfig={handleUpdateWhatsAppConfig}
               onUpdateStoreSettings={handleUpdateStoreSettings}
               onResetSampleData={handleResetSampleData}
+              adminEmail={user.email || 'technhobbies268@gmail.com'}
+              emailVerified={user.emailVerified}
+              onLogout={handleAdminLogout}
+              onSendVerification={sendVerification}
+              onRefreshAuthUser={refreshUser}
               storageWarning={storageWarning}
             />
           </Suspense>
@@ -470,11 +556,9 @@ export default function App() {
 
       {route !== 'admin' && (
         <Footer
-          categories={state.categories}
           storeSettings={state.storeSettings}
           whatsappConfig={state.whatsappConfig}
           onNavigate={handleNavigate}
-          onSelectCategory={handleSelectCategory}
           onUnconfiguredWhatsApp={(msg) => setWaModalMessage(msg)}
         />
       )}
@@ -489,5 +573,13 @@ export default function App() {
         }}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
