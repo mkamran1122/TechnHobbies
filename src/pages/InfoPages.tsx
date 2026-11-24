@@ -23,10 +23,11 @@ export function InfoPage({
   onUnconfiguredWhatsApp,
 }: InfoPageProps) {
   if (mode === 'about') {
+    const email = storeSettings.contactEmail.trim();
     return (
-      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-8 space-y-5">
-          <div className="flex items-center gap-3.5 border-b border-slate-200 pb-5">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-10">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-8 space-y-5">
+          <div className="flex items-center gap-3.5 border-b border-slate-200 pb-4 sm:pb-5">
             <img
               src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
               alt="TechnHobbies Logo"
@@ -36,7 +37,7 @@ export function InfoPage({
               <p className="text-xs font-semibold uppercase tracking-wider text-orange-700">
                 About {storeSettings.storeName}
               </p>
-              <h1 className="font-display text-xl sm:text-3xl font-bold text-slate-900">
+              <h1 className="font-display text-xl sm:text-3xl font-bold text-slate-900 leading-snug">
                 RC Cars, Drones &amp; Hobby Hardware in Pakistan
               </h1>
             </div>
@@ -60,14 +61,25 @@ export function InfoPage({
             </p>
           </div>
 
-          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm font-medium text-slate-700">{storeSettings.cityBase}</p>
+          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <p className="text-sm font-medium text-slate-700">{storeSettings.cityBase}</p>
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  className="inline-flex items-center min-h-[36px] text-sm font-medium text-orange-700 hover:underline break-all"
+                >
+                  {email}
+                </a>
+              )}
+            </div>
             <WhatsAppInquiryButton
               config={whatsappConfig}
               generalTopic="Hardware Consultation & Availability"
               label="Contact on WhatsApp"
               source="general"
               variant="secondary"
+              className="w-full sm:w-auto"
               onTrackClick={onTrackWhatsAppClick}
               onUnconfiguredClick={onUnconfiguredWhatsApp}
             />
@@ -79,12 +91,12 @@ export function InfoPage({
 
   if (mode === 'privacy') {
     return (
-      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-8 space-y-5">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-10">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-8 space-y-4 sm:space-y-5">
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">
             Privacy Policy
           </h1>
-          <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
+          <div className="space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed">
             <p>
               TechnHobbies operates as a product discovery catalog. We do not collect payment card
               details, bank credentials, or automated checkout billing profiles on this website.
@@ -105,13 +117,13 @@ export function InfoPage({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
-      <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-8 space-y-6">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-10">
+      <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-8 space-y-5 sm:space-y-6">
+        <h1 className="font-display text-xl sm:text-3xl font-bold text-slate-900 leading-snug">
           Terms, Warranty &amp; 7-Day Return Policy
         </h1>
 
-        <div className="space-y-5 text-sm text-slate-700 leading-relaxed">
+        <div className="space-y-5 text-sm sm:text-base text-slate-700 leading-relaxed">
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">Catalog Pricing &amp; Inquiries</h2>
             <p>

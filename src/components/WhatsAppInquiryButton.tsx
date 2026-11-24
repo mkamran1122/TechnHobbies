@@ -69,9 +69,9 @@ export function WhatsAppInquiryButton({
 
   const baseStyles =
     variant === 'primary'
-      ? 'inline-flex items-center justify-center gap-2 px-5 py-3.5 min-h-[44px] text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600'
+      ? 'inline-flex items-center justify-center gap-2 px-5 py-3 min-h-[44px] text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600'
       : variant === 'compact'
-        ? 'inline-flex items-center justify-center gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 min-h-[38px] sm:min-h-[40px] text-[11px] sm:text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600'
+        ? 'inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-2 min-h-[44px] max-w-full min-w-0 text-[11px] min-[360px]:text-xs sm:text-[13px] font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600'
         : 'inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600';
 
   const handleTracking = () => {

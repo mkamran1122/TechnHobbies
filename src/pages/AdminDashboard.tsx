@@ -190,21 +190,54 @@ export function AdminDashboard({
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Sidebar Navigation (240px–260px feel on desktop) */}
-        <aside className="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 space-y-4 min-w-0">
-          <div className="px-2 pb-3 border-b border-slate-200 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-orange-700">
-              Admin Console
-            </p>
-            <h1 className="font-display text-lg font-bold text-slate-900">
-              TechnHobbies Manager
-            </h1>
-            <p className="text-xs text-slate-600 break-all">{adminEmail}</p>
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
+        {/* Sidebar Navigation (compact horizontal rail on mobile, 240px–260px sidebar on desktop) */}
+        <aside className="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-3 sm:p-4 space-y-3 lg:space-y-4 min-w-0">
+          <div className="flex items-start justify-between gap-2 lg:block px-1 lg:px-2 pb-2.5 lg:pb-3 border-b border-slate-200">
+            <div className="min-w-0 space-y-0.5 sm:space-y-1">
+              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-orange-700">
+                Admin Console
+              </p>
+              <h1 className="font-display text-base sm:text-lg font-bold text-slate-900 truncate">
+                TechnHobbies Manager
+              </h1>
+              <p className="text-xs text-slate-600 truncate sm:break-all">{adminEmail}</p>
+            </div>
+            <div className="flex lg:hidden items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={onResetSampleData}
+                aria-label="Reset Sample Catalog"
+                title="Reset Sample Catalog"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={loggingOut}
+                onClick={async () => {
+                  setLoggingOut(true);
+                  try {
+                    await onLogout();
+                  } finally {
+                    setLoggingOut(false);
+                  }
+                }}
+                aria-label={loggingOut ? 'Signing Out' : 'Logout'}
+                className="inline-flex items-center justify-center gap-1.5 px-3 min-h-[44px] text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white border border-rose-200 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                <span>{loggingOut ? 'Exiting...' : 'Logout'}</span>
+              </button>
+            </div>
           </div>
 
-          <nav className="space-y-1" aria-label="Admin sections">
+          <nav
+            className="flex overflow-x-auto no-scrollbar gap-1.5 pb-0.5 lg:block lg:space-y-1 lg:overflow-visible"
+            aria-label="Admin sections"
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -213,10 +246,10 @@ export function AdminDashboard({
                   key={item.id}
                   type="button"
                   onClick={() => onChangeTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  className={`shrink-0 lg:w-full flex items-center gap-2 lg:gap-2.5 px-3 py-2 lg:py-2.5 min-h-[44px] rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-slate-900 text-white'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      : 'text-slate-700 bg-slate-50 lg:bg-transparent hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
@@ -226,11 +259,11 @@ export function AdminDashboard({
             })}
           </nav>
 
-          <div className="pt-3 border-t border-slate-200 space-y-2">
+          <div className="hidden lg:block pt-3 border-t border-slate-200 space-y-2">
             <button
               type="button"
               onClick={onResetSampleData}
-              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 min-h-[40px] text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset Sample Catalog</span>
@@ -300,7 +333,7 @@ export function AdminDashboard({
                         );
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md"
+                    className="inline-flex items-center gap-1.5 px-3 min-h-[44px] text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
                   >
                     <MailCheck className="w-3.5 h-3.5" />
                     <span>Send Verification Email</span>
@@ -308,7 +341,7 @@ export function AdminDashboard({
                   <button
                     type="button"
                     onClick={() => void onRefreshAuthUser()}
-                    className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-amber-300 hover:bg-amber-100 rounded-md"
+                    className="px-3 min-h-[44px] text-xs font-medium text-slate-700 bg-white border border-amber-300 hover:bg-amber-100 rounded-lg"
                   >
                     Refresh Verification Status
                   </button>
@@ -334,9 +367,9 @@ export function AdminDashboard({
 
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
-                <h2 className="font-display text-xl font-bold text-slate-900">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6">
+                <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
                   Catalog &amp; Inquiry Overview
                 </h2>
                 <p className="text-sm text-slate-600 mt-1">
@@ -345,33 +378,33 @@ export function AdminDashboard({
                   design.
                 </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
+                  <div className="p-3.5 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <p className="text-xs font-medium text-slate-500">Active Products</p>
-                    <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
                       {activeProducts.length}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 tabular-nums">
                       {publishedCount} published
                     </p>
                   </div>
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="p-3.5 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <p className="text-xs font-medium text-slate-500">Featured Models</p>
-                    <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
                       {featuredCount}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">Homepage showcase</p>
                   </div>
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="p-3.5 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <p className="text-xs font-medium text-slate-500">Categories / Brands</p>
-                    <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
                       {state.categories.length} / {state.brands.length}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">Active taxonomy</p>
                   </div>
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="p-3.5 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <p className="text-xs font-medium text-slate-500">WhatsApp Inquiries</p>
-                    <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
                       {state.inquiryAnalytics.length}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">Local session clicks</p>
@@ -379,7 +412,7 @@ export function AdminDashboard({
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h3 className="text-base font-bold text-slate-900">
                     WhatsApp Business Channel Status
@@ -400,7 +433,7 @@ export function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => onChangeTab('whatsapp')}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg whitespace-nowrap shrink-0"
+                  className="w-full sm:w-auto px-4 min-h-[44px] text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg whitespace-nowrap shrink-0"
                 >
                   Configure WhatsApp
                 </button>
@@ -411,9 +444,9 @@ export function AdminDashboard({
           {/* PRODUCTS MANAGEMENT TAB */}
           {activeTab === 'products' && (
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                  <h2 className="font-display text-xl font-bold text-slate-900">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
                     Product Catalog &amp; PKR Pricing
                   </h2>
                   <p className="text-xs text-slate-600 mt-0.5">
@@ -426,30 +459,30 @@ export function AdminDashboard({
                     setEditingProduct(null);
                     setIsProductModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-600 hover:bg-orange-500 rounded-lg whitespace-nowrap shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 min-h-[44px] text-sm font-semibold text-white bg-orange-600 hover:bg-orange-500 rounded-lg whitespace-nowrap shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Product</span>
                 </button>
               </div>
 
-              <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="relative flex-1 max-w-sm">
+              <div className="p-3.5 sm:p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="relative flex-1 sm:max-w-sm">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     placeholder="Filter by product name or SKU..."
-                    className="w-full pl-9 pr-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg"
+                    className="w-full pl-9 pr-3 min-h-[44px] text-base md:text-sm bg-white border border-slate-200 rounded-lg"
                   />
                 </div>
 
-                <div className="flex items-center gap-1 p-1 bg-slate-200/60 rounded-lg self-start">
+                <div className="grid grid-cols-2 sm:inline-flex items-center gap-1 p-1 bg-slate-200/60 rounded-lg w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowArchived(false)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md ${
+                    className={`px-3 min-h-[40px] text-xs font-semibold rounded-md ${
                       !showArchived ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'
                     }`}
                   >
@@ -458,7 +491,7 @@ export function AdminDashboard({
                   <button
                     type="button"
                     onClick={() => setShowArchived(true)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md ${
+                    className={`px-3 min-h-[40px] text-xs font-semibold rounded-md ${
                       showArchived ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'
                     }`}
                   >
@@ -467,7 +500,130 @@ export function AdminDashboard({
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Mobile Product Cards */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {filteredAdminProducts.length === 0 ? (
+                  <p className="py-10 px-4 text-center text-sm text-slate-500">
+                    No products in this view.
+                  </p>
+                ) : (
+                  filteredAdminProducts.map((product) => (
+                    <div key={product.id} className="p-3.5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-16 h-12 rounded-md bg-slate-100 overflow-hidden shrink-0">
+                          <ResilientImage
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5 truncate">
+                            {state.brands.find((b) => b.id === product.brandId)?.name || '—'} ·{' '}
+                            {product.condition} · <span className="font-mono">{product.sku}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="font-mono tabular-nums">
+                          <span className="text-sm font-bold text-slate-900">
+                            {formatPKR(product.price)}
+                          </span>
+                          {product.originalPrice && (
+                            <span className="ml-1.5 text-[11px] text-slate-400 line-through">
+                              {formatPKR(product.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-slate-700 whitespace-nowrap">
+                          <span className="font-medium">{product.stockStatus}</span>
+                          <span className="text-slate-400 ml-1 tabular-nums">
+                            ({product.stockCount})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpsertProduct({ ...product, published: !product.published })
+                            }
+                            className={`inline-flex items-center gap-1.5 px-2.5 min-h-[44px] text-xs font-semibold rounded-lg border ${
+                              product.published
+                                ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                                : 'text-slate-600 bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            {product.published ? (
+                              <Eye className="w-3.5 h-3.5" />
+                            ) : (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            )}
+                            <span>{product.published ? 'Live' : 'Draft'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpsertProduct({ ...product, featured: !product.featured })
+                            }
+                            aria-label="Toggle Featured"
+                            className={`inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg border ${
+                              product.featured
+                                ? 'text-amber-600 bg-amber-50 border-amber-200'
+                                : 'text-slate-400 bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            <Star
+                              className={`w-4 h-4 ${product.featured ? 'fill-amber-500' : ''}`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingProduct(product);
+                              setIsProductModalOpen(true);
+                            }}
+                            aria-label={`Edit ${product.name}`}
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpsertProduct({ ...product, archived: !product.archived })
+                            }
+                            aria-label={product.archived ? 'Restore product' : 'Archive product'}
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-700 bg-slate-100 hover:text-amber-700 rounded-lg"
+                          >
+                            <Archive className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteProduct(product.id)}
+                            aria-label={`Delete ${product.name}`}
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop & Tablet Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 bg-slate-50/70">
@@ -538,7 +694,7 @@ export function AdminDashboard({
                                   onUpsertProduct({ ...product, published: !product.published })
                                 }
                                 title={product.published ? 'Unpublish' : 'Publish'}
-                                className={`inline-flex items-center gap-1 font-medium ${
+                                className={`inline-flex items-center gap-1 min-h-[36px] font-medium ${
                                   product.published ? 'text-emerald-700' : 'text-slate-400'
                                 }`}
                               >
@@ -555,9 +711,9 @@ export function AdminDashboard({
                                   onUpsertProduct({ ...product, featured: !product.featured })
                                 }
                                 title="Toggle Featured"
-                                className={
+                                className={`p-1.5 ${
                                   product.featured ? 'text-amber-500' : 'text-slate-300 hover:text-slate-500'
-                                }
+                                }`}
                               >
                                 <Star
                                   className={`w-4 h-4 ${product.featured ? 'fill-amber-500' : ''}`}
@@ -574,7 +730,7 @@ export function AdminDashboard({
                                   setIsProductModalOpen(true);
                                 }}
                                 aria-label={`Edit ${product.name}`}
-                                className="p-1.5 text-slate-600 hover:text-slate-900 rounded hover:bg-slate-200/70"
+                                className="p-2 text-slate-600 hover:text-slate-900 rounded hover:bg-slate-200/70"
                               >
                                 <Edit3 className="w-4 h-4" />
                               </button>
@@ -585,7 +741,7 @@ export function AdminDashboard({
                                 }
                                 aria-label={product.archived ? 'Restore product' : 'Archive product'}
                                 title={product.archived ? 'Restore from archive' : 'Archive product'}
-                                className="p-1.5 text-slate-600 hover:text-amber-700 rounded hover:bg-slate-200/70"
+                                className="p-2 text-slate-600 hover:text-amber-700 rounded hover:bg-slate-200/70"
                               >
                                 <Archive className="w-4 h-4" />
                               </button>
@@ -594,7 +750,7 @@ export function AdminDashboard({
                                 onClick={() => onDeleteProduct(product.id)}
                                 aria-label={`Delete ${product.name}`}
                                 title="Delete permanently"
-                                className="p-1.5 text-slate-400 hover:text-rose-700 rounded hover:bg-rose-50"
+                                className="p-2 text-slate-400 hover:text-rose-700 rounded hover:bg-rose-50"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -611,9 +767,9 @@ export function AdminDashboard({
 
           {/* CATEGORIES & BRANDS TAB */}
           {activeTab === 'taxonomy' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Categories */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
                 <h2 className="font-display text-lg font-bold text-slate-900">Categories</h2>
                 <form
                   onSubmit={(e) => {
@@ -637,7 +793,7 @@ export function AdminDashboard({
                     setNewCatName('');
                     setNewCatDesc('');
                   }}
-                  className="space-y-2 pb-4 border-b border-slate-200"
+                  className="space-y-2.5 pb-4 border-b border-slate-200"
                 >
                   <input
                     type="text"
@@ -645,19 +801,19 @@ export function AdminDashboard({
                     value={newCatName}
                     onChange={(e) => setNewCatName(e.target.value)}
                     placeholder="Category name"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                   <input
                     type="text"
                     value={newCatDesc}
                     onChange={(e) => setNewCatDesc(e.target.value)}
                     placeholder="Short category description"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                   <div className="flex items-center gap-2">
                     <button
                       type="submit"
-                      className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg"
+                      className="px-4 min-h-[44px] text-xs font-semibold text-white bg-slate-900 rounded-lg"
                     >
                       {editingCategoryId ? 'Update Category' : 'Add Category'}
                     </button>
@@ -669,7 +825,7 @@ export function AdminDashboard({
                           setNewCatName('');
                           setNewCatDesc('');
                         }}
-                        className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                        className="px-3 min-h-[44px] text-xs font-medium text-slate-600 hover:text-slate-900"
                       >
                         Cancel
                       </button>
@@ -681,7 +837,7 @@ export function AdminDashboard({
                   {state.categories.map((cat) => {
                     const count = state.products.filter((p) => p.categoryId === cat.id).length;
                     return (
-                      <li key={cat.id} className="py-2.5 flex items-center justify-between gap-2">
+                      <li key={cat.id} className="py-2 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 truncate">
                             {cat.name}{' '}
@@ -700,7 +856,7 @@ export function AdminDashboard({
                               setNewCatDesc(cat.description);
                             }}
                             aria-label={`Edit ${cat.name}`}
-                            className="p-1.5 text-slate-500 hover:text-slate-900"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -708,7 +864,7 @@ export function AdminDashboard({
                             type="button"
                             onClick={() => onDeleteCategory(cat.id)}
                             aria-label={`Delete ${cat.name}`}
-                            className="p-1.5 text-slate-400 hover:text-rose-600"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -720,7 +876,7 @@ export function AdminDashboard({
               </div>
 
               {/* Brands */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
                 <h2 className="font-display text-lg font-bold text-slate-900">Brands</h2>
                 <form
                   onSubmit={(e) => {
@@ -743,23 +899,23 @@ export function AdminDashboard({
                     setNewBrandCountry('');
                     setNewBrandSpecialty('');
                   }}
-                  className="space-y-2 pb-4 border-b border-slate-200"
+                  className="space-y-2.5 pb-4 border-b border-slate-200"
                 >
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input
                       type="text"
                       required
                       value={newBrandName}
                       onChange={(e) => setNewBrandName(e.target.value)}
                       placeholder="Brand name"
-                      className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                      className="px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                     />
                     <input
                       type="text"
                       value={newBrandCountry}
                       onChange={(e) => setNewBrandCountry(e.target.value)}
                       placeholder="Origin (e.g. USA)"
-                      className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                      className="px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                     />
                   </div>
                   <input
@@ -767,12 +923,12 @@ export function AdminDashboard({
                     value={newBrandSpecialty}
                     onChange={(e) => setNewBrandSpecialty(e.target.value)}
                     placeholder="Specialty (e.g. FPV Motors & Frames)"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                   <div className="flex items-center gap-2">
                     <button
                       type="submit"
-                      className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg"
+                      className="px-4 min-h-[44px] text-xs font-semibold text-white bg-slate-900 rounded-lg"
                     >
                       {editingBrandId ? 'Update Brand' : 'Add Brand'}
                     </button>
@@ -785,7 +941,7 @@ export function AdminDashboard({
                           setNewBrandCountry('');
                           setNewBrandSpecialty('');
                         }}
-                        className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                        className="px-3 min-h-[44px] text-xs font-medium text-slate-600 hover:text-slate-900"
                       >
                         Cancel
                       </button>
@@ -797,7 +953,7 @@ export function AdminDashboard({
                   {state.brands.map((brand) => {
                     const count = state.products.filter((p) => p.brandId === brand.id).length;
                     return (
-                      <li key={brand.id} className="py-2.5 flex items-center justify-between gap-2">
+                      <li key={brand.id} className="py-2 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900">
                             {brand.name}{' '}
@@ -817,7 +973,7 @@ export function AdminDashboard({
                               setNewBrandSpecialty(brand.specialty);
                             }}
                             aria-label={`Edit ${brand.name}`}
-                            className="p-1.5 text-slate-500 hover:text-slate-900"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -825,7 +981,7 @@ export function AdminDashboard({
                             type="button"
                             onClick={() => onDeleteBrand(brand.id)}
                             aria-label={`Delete ${brand.name}`}
-                            className="p-1.5 text-slate-400 hover:text-rose-600"
+                            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -840,14 +996,14 @@ export function AdminDashboard({
 
           {/* WHATSAPP CONFIGURATION & ANALYTICS TAB */}
           {activeTab === 'whatsapp' && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <form
                 onSubmit={handleSaveWhatsApp}
-                className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
+                className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-5"
               >
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
                   <div>
-                    <h2 className="font-display text-xl font-bold text-slate-900">
+                    <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
                       WhatsApp Inquiry Configuration
                     </h2>
                     <p className="text-xs text-slate-600 mt-1">
@@ -883,7 +1039,7 @@ export function AdminDashboard({
                           ? `Using env VITE_WHATSAPP_BUSINESS_NUMBER (+${envNumber})`
                           : 'Leave blank if unconfigured, or enter country code + digits'
                       }
-                      className="w-full px-3 py-2 text-sm font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 min-h-[44px] text-base md:text-sm font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <p className="text-[11px] text-slate-500 mt-1">
                       Uses official <code className="font-mono">https://wa.me/&lt;number&gt;?text=...</code>{' '}
@@ -902,7 +1058,7 @@ export function AdminDashboard({
                       onChange={(e) =>
                         setWaDraft({ ...waDraft, primaryButtonLabel: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                      className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                     />
                   </div>
 
@@ -916,38 +1072,38 @@ export function AdminDashboard({
                       onChange={(e) =>
                         setWaDraft({ ...waDraft, cardButtonLabel: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                      className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-6">
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-800 cursor-pointer">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6">
+                  <label className="inline-flex items-center gap-2.5 min-h-[44px] text-sm text-slate-800 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={waDraft.showCardInquiryButton}
                       onChange={(e) =>
                         setWaDraft({ ...waDraft, showCardInquiryButton: e.target.checked })
                       }
-                      className="rounded border-slate-300 text-orange-600"
+                      className="w-5 h-5 sm:w-4 sm:h-4 rounded border-slate-300 text-orange-600"
                     />
                     <span>Show WhatsApp inquiry button on product cards</span>
                   </label>
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-800 cursor-pointer">
+                  <label className="inline-flex items-center gap-2.5 min-h-[44px] text-sm text-slate-800 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={waDraft.trackLocalClicks}
                       onChange={(e) =>
                         setWaDraft({ ...waDraft, trackLocalClicks: e.target.checked })
                       }
-                      className="rounded border-slate-300 text-orange-600"
+                      className="w-5 h-5 sm:w-4 sm:h-4 rounded border-slate-300 text-orange-600"
                     />
                     <span>Record local WhatsApp click events (browser log)</span>
                   </label>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                     <label className="text-xs font-semibold text-slate-700">
                       Default Inquiry Message Template
                     </label>
@@ -956,7 +1112,7 @@ export function AdminDashboard({
                       onClick={() =>
                         setWaDraft({ ...waDraft, defaultMessageTemplate: DEFAULT_WHATSAPP_TEMPLATE })
                       }
-                      className="text-xs font-medium text-orange-700 hover:underline"
+                      className="min-h-[36px] text-xs font-medium text-orange-700 hover:underline"
                     >
                       Restore Default Template
                     </button>
@@ -967,7 +1123,7 @@ export function AdminDashboard({
                     onChange={(e) =>
                       setWaDraft({ ...waDraft, defaultMessageTemplate: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 py-2.5 text-base md:text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg"
                   />
                   <p className="text-[11px] text-slate-500 mt-1">
                     Available tokens: <code className="font-mono">{'{productName}'}</code>,{' '}
@@ -982,13 +1138,13 @@ export function AdminDashboard({
                     <p className="text-xs font-semibold text-slate-700 mb-1">
                       Live Message Preview (Sample Product)
                     </p>
-                    <pre className="bg-slate-900 text-slate-100 font-mono text-xs p-3.5 rounded-lg whitespace-pre-wrap break-words">
+                    <pre className="bg-slate-900 text-slate-100 font-mono text-xs p-3.5 rounded-lg whitespace-pre-wrap break-words overflow-x-auto max-w-full">
                       {waPreviewText}
                     </pre>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-2">
                   <div>
                     {waSavedBanner && (
                       <span className="text-xs font-semibold text-emerald-700">
@@ -998,7 +1154,7 @@ export function AdminDashboard({
                   </div>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
+                    className="w-full sm:w-auto px-5 min-h-[44px] text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
                   >
                     Save WhatsApp Settings
                   </button>
@@ -1006,7 +1162,7 @@ export function AdminDashboard({
               </form>
 
               {/* WhatsApp Contact Analytics Readiness Panel */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h3 className="font-display text-lg font-bold text-slate-900">
@@ -1027,36 +1183,63 @@ export function AdminDashboard({
                     No WhatsApp inquiry clicks recorded in this browser yet.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto border-t border-slate-200">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="text-slate-500 border-b border-slate-200">
-                          <th className="py-2 pr-3">Product</th>
-                          <th className="py-2 px-3">SKU</th>
-                          <th className="py-2 px-3 text-right">Price</th>
-                          <th className="py-2 px-3">Source</th>
-                          <th className="py-2 pl-3 text-right">Time</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {state.inquiryAnalytics.slice(0, 12).map((ev) => (
-                          <tr key={ev.id}>
-                            <td className="py-2 pr-3 font-medium text-slate-900 truncate max-w-[200px]">
+                  <>
+                    {/* Mobile Analytics Cards */}
+                    <div className="sm:hidden divide-y divide-slate-100 border-t border-slate-200">
+                      {state.inquiryAnalytics.slice(0, 12).map((ev) => (
+                        <div key={ev.id} className="py-3 space-y-1 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-slate-900 line-clamp-1">
                               {ev.productName}
-                            </td>
-                            <td className="py-2 px-3 font-mono text-slate-600">{ev.sku}</td>
-                            <td className="py-2 px-3 text-right font-mono tabular-nums">
+                            </p>
+                            <span className="font-mono font-semibold text-slate-900 tabular-nums shrink-0">
                               {formatPKR(ev.price)}
-                            </td>
-                            <td className="py-2 px-3 uppercase text-slate-500">{ev.source}</td>
-                            <td className="py-2 pl-3 text-right font-mono text-slate-500 tabular-nums">
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-500 font-mono">
+                            <span>
+                              {ev.sku} · <span className="uppercase font-sans">{ev.source}</span>
+                            </span>
+                            <span className="tabular-nums">
                               {new Date(ev.timestamp).toLocaleTimeString()}
-                            </td>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tablet & Desktop Table */}
+                    <div className="hidden sm:block overflow-x-auto border-t border-slate-200">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="text-slate-500 border-b border-slate-200">
+                            <th className="py-2 pr-3">Product</th>
+                            <th className="py-2 px-3">SKU</th>
+                            <th className="py-2 px-3 text-right">Price</th>
+                            <th className="py-2 px-3">Source</th>
+                            <th className="py-2 pl-3 text-right">Time</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {state.inquiryAnalytics.slice(0, 12).map((ev) => (
+                            <tr key={ev.id}>
+                              <td className="py-2 pr-3 font-medium text-slate-900 truncate max-w-[200px]">
+                                {ev.productName}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-slate-600">{ev.sku}</td>
+                              <td className="py-2 px-3 text-right font-mono tabular-nums">
+                                {formatPKR(ev.price)}
+                              </td>
+                              <td className="py-2 px-3 uppercase text-slate-500">{ev.source}</td>
+                              <td className="py-2 pl-3 text-right font-mono text-slate-500 tabular-nums">
+                                {new Date(ev.timestamp).toLocaleTimeString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -1066,10 +1249,10 @@ export function AdminDashboard({
           {activeTab === 'settings' && (
             <form
               onSubmit={handleSaveSettings}
-              className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
+              className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 space-y-5"
             >
               <div className="border-b border-slate-200 pb-4">
-                <h2 className="font-display text-xl font-bold text-slate-900">
+                <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
                   Store Identity, Footer Contact &amp; SEO
                 </h2>
                 <p className="text-xs text-slate-600 mt-1">
@@ -1089,7 +1272,7 @@ export function AdminDashboard({
                     onChange={(e) =>
                       setSettingsDraft({ ...settingsDraft, storeName: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div>
@@ -1103,7 +1286,7 @@ export function AdminDashboard({
                       setSettingsDraft({ ...settingsDraft, contactEmail: e.target.value })
                     }
                     placeholder="Leave empty to hide email in footer"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -1116,7 +1299,7 @@ export function AdminDashboard({
                     onChange={(e) =>
                       setSettingsDraft({ ...settingsDraft, seoTitle: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -1129,7 +1312,7 @@ export function AdminDashboard({
                     onChange={(e) =>
                       setSettingsDraft({ ...settingsDraft, seoDescription: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 py-2 text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div>
@@ -1145,7 +1328,7 @@ export function AdminDashboard({
                         socialLinks: { ...settingsDraft.socialLinks, instagram: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div>
@@ -1161,12 +1344,12 @@ export function AdminDashboard({
                         socialLinks: { ...settingsDraft.socialLinks, youtube: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <div>
                   {settingsSavedBanner && (
                     <span className="text-xs font-semibold text-emerald-700">
@@ -1176,7 +1359,7 @@ export function AdminDashboard({
                 </div>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
+                  className="w-full sm:w-auto px-5 min-h-[44px] text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
                 >
                   Save Settings
                 </button>

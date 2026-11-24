@@ -76,7 +76,7 @@ export function AdminLoginPage({ notice, onBackToStorefront }: AdminLoginPagePro
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter authorized admin email"
-              className="w-full px-3.5 py-2.5 min-h-[44px] text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3.5 py-2.5 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -93,13 +93,13 @@ export function AdminLoginPage({ notice, onBackToStorefront }: AdminLoginPagePro
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full pl-3.5 pr-11 py-2.5 min-h-[44px] text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-3.5 pr-12 py-2.5 min-h-[44px] text-base md:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-500 hover:text-slate-900 rounded-md"
+                className="absolute right-0.5 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-slate-900 rounded-md focus-visible:outline-2 focus-visible:outline-orange-600"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>

@@ -769,7 +769,7 @@ export const INITIAL_CATALOG_STATE: CatalogStoreState = {
   storeSettings: {
     storeName: 'TechnHobbies',
     tagline: 'Pakistan RC, Drones & Precision Hobby Hardware',
-    contactEmail: import.meta.env?.VITE_CONTACT_EMAIL || '',
+    contactEmail: import.meta.env?.VITE_CONTACT_EMAIL || 'technhobbies268@gmail.com',
     cityBase: 'Karachi · Nationwide Pakistan Dispatch',
     socialLinks: {
       instagram: 'https://instagram.com',

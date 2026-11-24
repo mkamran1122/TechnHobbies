@@ -51,23 +51,23 @@ export function ProductCard({
         </div>
       </button>
 
-      <div className="p-2 sm:p-3.5 flex-1 flex flex-col justify-between gap-2 min-w-0">
-        <div className="space-y-0.5 sm:space-y-1 min-w-0">
+      <div className="p-2.5 sm:p-3.5 flex-1 flex flex-col justify-between gap-2.5 min-w-0">
+        <div className="space-y-1 min-w-0">
           <button
             type="button"
             onClick={() => onSelectProduct(product.slug)}
             className="text-left block w-full focus-visible:outline-2 focus-visible:outline-orange-600 rounded"
           >
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-900 leading-tight line-clamp-2">
+            <h3 className="text-[13px] sm:text-sm font-semibold text-slate-900 leading-snug line-clamp-2 min-h-[2.4em]">
               {product.name}
             </h3>
           </button>
 
-          <p className="text-[13px] sm:text-base font-bold text-slate-900 font-mono tabular-nums truncate">
+          <p className="text-sm sm:text-base font-bold text-slate-900 font-mono tabular-nums truncate">
             {formatPKR(product.price)}
           </p>
 
-          <p className={`text-[11px] sm:text-xs font-medium leading-tight ${stockColor}`}>
+          <p className={`text-xs font-medium leading-tight ${stockColor}`}>
             {effectiveStock}
           </p>
         </div>

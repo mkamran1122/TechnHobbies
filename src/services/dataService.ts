@@ -58,6 +58,7 @@ class LocalSampleCatalogService implements ICatalogService {
       }
       const parsed = JSON.parse(raw) as Partial<CatalogStoreState>;
       const cachedBusinessNumber = parsed.whatsappConfig?.businessNumber?.trim();
+      const cachedContactEmail = parsed.storeSettings?.contactEmail?.trim();
       const cachedCityBase = parsed.storeSettings?.cityBase;
       return {
         ...INITIAL_CATALOG_STATE,
@@ -70,6 +71,7 @@ class LocalSampleCatalogService implements ICatalogService {
         storeSettings: {
           ...INITIAL_CATALOG_STATE.storeSettings,
           ...(parsed.storeSettings || {}),
+          contactEmail: cachedContactEmail || INITIAL_CATALOG_STATE.storeSettings.contactEmail,
           cityBase:
             !cachedCityBase || cachedCityBase === 'Lahore · Nationwide Pakistan Dispatch'
               ? INITIAL_CATALOG_STATE.storeSettings.cityBase

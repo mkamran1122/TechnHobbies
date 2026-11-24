@@ -133,18 +133,18 @@ export function ProductDetailPage({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-8 sm:space-y-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-12">
       {/* Breadcrumb Navigation */}
       <nav
-        className="flex items-center gap-1.5 text-xs text-slate-500 overflow-x-auto whitespace-nowrap py-1"
+        className="flex items-center gap-1.5 text-xs text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap"
         aria-label="Breadcrumb"
       >
         <button
           type="button"
           onClick={onBackToShop}
-          className="inline-flex items-center gap-1 font-medium text-slate-700 hover:text-slate-900 shrink-0"
+          className="inline-flex items-center gap-1 min-h-[44px] pr-1.5 font-medium text-slate-700 hover:text-slate-900 shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 rounded"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-4 h-4" />
           <span>Shop</span>
         </button>
         {category && (
@@ -153,7 +153,7 @@ export function ProductDetailPage({
             <button
               type="button"
               onClick={() => onSelectCategory(category.id)}
-              className="hover:text-slate-900 shrink-0"
+              className="min-h-[44px] px-1 hover:text-slate-900 shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 rounded"
             >
               {category.name}
             </button>
@@ -164,9 +164,9 @@ export function ProductDetailPage({
       </nav>
 
       {/* Main Product Showcase */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-10 items-start">
         {/* Product Image Gallery */}
-        <div className="lg:col-span-7 space-y-3 lg:sticky lg:top-24 min-w-0">
+        <div className="lg:col-span-7 space-y-2.5 sm:space-y-3 lg:sticky lg:top-24 min-w-0">
           <div className="aspect-[4/3] w-full bg-slate-100 border border-slate-200 rounded-lg overflow-hidden">
             <ResilientImage
               src={product.images[selectedImageIndex] || product.images[0]}
@@ -184,7 +184,8 @@ export function ProductDetailPage({
                   key={`${img}-${idx}`}
                   type="button"
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`aspect-[4/3] rounded-md overflow-hidden border bg-slate-100 ${
+                  aria-label={`View image ${idx + 1}`}
+                  className={`aspect-[4/3] min-h-[44px] rounded-md overflow-hidden border bg-slate-100 focus-visible:outline-2 focus-visible:outline-orange-600 ${
                     selectedImageIndex === idx
                       ? 'border-orange-600 ring-2 ring-orange-600/20'
                       : 'border-slate-200 opacity-80 hover:opacity-100'
@@ -202,14 +203,14 @@ export function ProductDetailPage({
         </div>
 
         {/* Product Pricing, Variants, Availability & WhatsApp CTA */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-5 min-w-0">
-          <div className="space-y-2">
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-3.5 sm:p-6 space-y-4 sm:space-y-5 min-w-0">
+          <div className="space-y-1.5 sm:space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               {brand ? (
                 <button
                   type="button"
                   onClick={() => onSelectBrand(brand.id)}
-                  className="font-semibold uppercase tracking-wider text-orange-700 hover:underline"
+                  className="font-semibold uppercase tracking-wider text-orange-700 hover:underline py-1 min-h-[32px]"
                 >
                   {brand.name}
                 </button>
@@ -221,7 +222,7 @@ export function ProductDetailPage({
               <span className="font-mono text-slate-500 break-all">SKU: {effectiveSku}</span>
             </div>
 
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
               {product.name}
             </h1>
 
@@ -229,7 +230,7 @@ export function ProductDetailPage({
           </div>
 
           {/* PKR Price */}
-          <div className="py-3.5 border-y border-slate-200 space-y-1">
+          <div className="py-3 sm:py-3.5 border-y border-slate-200 space-y-1">
             <div className="flex items-baseline gap-2.5 flex-wrap">
               <span className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">
                 {formatPKR(effectivePrice)}
@@ -273,7 +274,7 @@ export function ProductDetailPage({
                       type="button"
                       disabled={!variant.inStock}
                       onClick={() => setSelectedVariantId(variant.id)}
-                      className={`flex items-center justify-between gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg border text-sm text-left ${
+                      className={`flex items-center justify-between gap-2 px-3.5 py-2.5 min-h-[44px] rounded-lg border text-sm text-left focus-visible:outline-2 focus-visible:outline-orange-600 ${
                         !variant.inStock
                           ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
                           : isSelected
@@ -298,7 +299,7 @@ export function ProductDetailPage({
           )}
 
           {/* Prominent CONTACT ON WHATSAPP Button */}
-          <div className="space-y-2.5 pt-1">
+          <div className="space-y-2 pt-1">
             <WhatsAppInquiryButton
               config={whatsappConfig}
               product={{
@@ -324,9 +325,9 @@ export function ProductDetailPage({
             <button
               type="button"
               onClick={() => setShowMessagePreview((prev) => !prev)}
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 py-2 min-h-[40px]"
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 py-2 min-h-[44px] rounded-lg focus-visible:outline-2 focus-visible:outline-orange-600"
             >
-              <Eye className="w-3.5 h-3.5 shrink-0" />
+              <Eye className="w-4 h-4 shrink-0" />
               <span>
                 {showMessagePreview
                   ? 'Hide WhatsApp Message Preview'
@@ -335,14 +336,14 @@ export function ProductDetailPage({
             </button>
 
             {showMessagePreview && (
-              <pre className="bg-slate-900 text-slate-100 font-mono text-xs p-3 rounded-lg whitespace-pre-wrap break-words leading-relaxed">
+              <pre className="bg-slate-900 text-slate-100 font-mono text-xs p-3 rounded-lg whitespace-pre-wrap break-words leading-relaxed overflow-x-auto max-w-full">
                 {previewMessage}
               </pre>
             )}
           </div>
 
           {/* Warranty, Dispatch & 7-Day Return Policy */}
-          <div className="pt-4 border-t border-slate-200 space-y-2.5 text-xs text-slate-600">
+          <div className="pt-3.5 border-t border-slate-200 space-y-2.5 text-xs sm:text-[13px] text-slate-600">
             <div className="flex items-start gap-2">
               <Shield className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
               <p className="min-w-0">
@@ -367,9 +368,9 @@ export function ProductDetailPage({
       </div>
 
       {/* Technical Documentation Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        <div className="lg:col-span-7 space-y-6 min-w-0">
-          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6 min-w-0">
+          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-2.5 sm:space-y-3">
             <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
               Product Description
             </h2>
@@ -378,7 +379,7 @@ export function ProductDetailPage({
             </p>
           </section>
 
-          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-3">
+          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-2.5 sm:space-y-3">
             <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900">
               Technical Specifications
             </h2>
@@ -386,9 +387,11 @@ export function ProductDetailPage({
               {product.specs.map((spec, idx) => (
                 <div
                   key={`${spec.label}-${idx}`}
-                  className="py-2.5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-2 text-sm"
+                  className="py-2.5 grid grid-cols-1 sm:grid-cols-12 gap-0.5 sm:gap-2 text-sm"
                 >
-                  <dt className="sm:col-span-5 font-medium text-slate-600">{spec.label}</dt>
+                  <dt className="sm:col-span-5 text-xs sm:text-sm font-medium text-slate-500 sm:text-slate-600">
+                    {spec.label}
+                  </dt>
                   <dd className="sm:col-span-7 font-medium text-slate-900 break-words">
                     {spec.value}
                   </dd>
@@ -398,8 +401,8 @@ export function ProductDetailPage({
           </section>
         </div>
 
-        <div className="lg:col-span-5 space-y-5 min-w-0">
-          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-3">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-5 min-w-0">
+          <section className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-2.5 sm:space-y-3">
             <div className="flex items-center gap-2">
               <PackageCheck className="w-5 h-5 text-orange-600 shrink-0" />
               <h2 className="font-display text-base sm:text-lg font-bold text-slate-900">
@@ -439,16 +442,47 @@ export function ProductDetailPage({
               <p className="text-sm text-slate-600 leading-relaxed">{product.shippingInfo}</p>
             </div>
           </section>
+
+          {/* Mobile Quick Bottom Inquiry Card after Specifications */}
+          <div className="lg:hidden bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-600">Ready to order or ask?</span>
+              <span className="text-base font-bold text-slate-900 font-mono tabular-nums">
+                {formatPKR(effectivePrice)}
+              </span>
+            </div>
+            <WhatsAppInquiryButton
+              config={whatsappConfig}
+              product={{
+                id: product.id,
+                name: product.name,
+                sku: effectiveSku,
+                price: effectivePrice,
+                slug: product.slug,
+                variantLabel: activeVariant?.label,
+              }}
+              label={
+                effectiveStock === 'Out of Stock'
+                  ? 'INQUIRE RESTOCK ON WHATSAPP'
+                  : undefined
+              }
+              source="pdp"
+              variant="primary"
+              className="w-full"
+              onTrackClick={onTrackWhatsAppClick}
+              onUnconfiguredClick={onUnconfiguredWhatsApp}
+            />
+          </div>
         </div>
       </div>
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <section className="space-y-4 pt-6 border-t border-slate-200">
+        <section className="space-y-3.5 sm:space-y-4 pt-5 sm:pt-6 border-t border-slate-200">
           <h2 className="font-display text-lg sm:text-2xl font-bold text-slate-900 tracking-tight">
             Related Products
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {relatedProducts.map((rel) => (
               <ProductCard
                 key={rel.id}

@@ -8,14 +8,14 @@ interface CategoriesPageProps {
 
 export function CategoriesPage({ categories, onSelectCategory }: CategoriesPageProps) {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-5">
-      <div className="border-b border-slate-200 pb-4">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-4 sm:space-y-5">
+      <div className="border-b border-slate-200 pb-3 sm:pb-4">
+        <h1 className="font-display text-xl sm:text-3xl font-bold text-slate-900 tracking-tight">
           Categories
         </h1>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
         {categories.map((category) => (
           <button
             key={category.id}
@@ -33,8 +33,8 @@ export function CategoriesPage({ categories, onSelectCategory }: CategoriesPageP
                 />
               </div>
             </div>
-            <div className="p-2 sm:p-3">
-              <h2 className="text-xs sm:text-sm font-semibold text-slate-900 leading-tight line-clamp-2">
+            <div className="p-2.5 sm:p-3">
+              <h2 className="text-[13px] sm:text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
                 {category.name}
               </h2>
             </div>

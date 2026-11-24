@@ -49,24 +49,24 @@ export function Footer({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-0.5 text-sm leading-snug">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-snug">
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 font-medium text-orange-400 hover:text-orange-300"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] lg:min-h-0 py-1 lg:py-0 font-medium text-orange-400 hover:text-orange-300 focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <MessageCircle className="w-4 h-4 lg:w-3.5 lg:h-3.5 shrink-0" />
                   <span>{formatWhatsAppDisplayNumber(effectiveWhatsApp)}</span>
                 </a>
               ) : (
                 <button
                   type="button"
                   onClick={() => onUnconfiguredWhatsApp(generalMsg)}
-                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 font-medium text-orange-400 hover:text-orange-300 text-left"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] lg:min-h-0 py-1 lg:py-0 font-medium text-orange-400 hover:text-orange-300 text-left focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                  <MessageCircle className="w-4 h-4 lg:w-3.5 lg:h-3.5 shrink-0" />
                   <span>WhatsApp Support</span>
                 </button>
               )}
@@ -74,9 +74,9 @@ export function Footer({
               {configuredEmail && (
                 <a
                   href={`mailto:${configuredEmail}`}
-                  className="inline-flex items-center gap-1.5 py-0.5 lg:py-0 text-slate-300 hover:text-white break-all"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-white break-all focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <Mail className="w-4 h-4 lg:w-3.5 lg:h-3.5 shrink-0" />
                   <span>{configuredEmail}</span>
                 </a>
               )}
@@ -86,33 +86,33 @@ export function Footer({
           {/* Center: Important Links (2-col grid on mobile, inline row on desktop) */}
           <nav
             aria-label="Footer navigation"
-            className="grid grid-cols-2 gap-x-4 gap-y-1 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 text-sm leading-snug"
+            className="grid grid-cols-2 gap-x-4 gap-y-0.5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 text-sm leading-snug"
           >
             <button
               type="button"
               onClick={() => onNavigate('shop')}
-              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+              className="min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-white text-left flex items-center focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
             >
               Shop
             </button>
             <button
               type="button"
               onClick={() => onNavigate('about')}
-              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+              className="min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-white text-left flex items-center focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
             >
               About
             </button>
             <button
               type="button"
               onClick={() => onNavigate('privacy')}
-              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+              className="min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-white text-left flex items-center focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
             >
               Privacy Policy
             </button>
             <button
               type="button"
               onClick={() => onNavigate('terms')}
-              className="py-0.5 lg:py-0 text-slate-300 hover:text-white text-left"
+              className="min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-white text-left flex items-center focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
             >
               Return Policy
             </button>
@@ -120,16 +120,16 @@ export function Footer({
 
           {/* Right: Social Media Links (single horizontal row on mobile & desktop) */}
           {(instagramUrl || youtubeUrl || facebookUrl) && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-snug lg:justify-end">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm leading-snug lg:justify-end">
               {instagramUrl && (
                 <a
                   href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-orange-400 focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
                   <span>Instagram</span>
-                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 lg:w-3 lg:h-3 shrink-0" />
                 </a>
               )}
               {youtubeUrl && (
@@ -137,10 +137,10 @@ export function Footer({
                   href={youtubeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-orange-400 focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
                   <span>YouTube</span>
-                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 lg:w-3 lg:h-3 shrink-0" />
                 </a>
               )}
               {facebookUrl && (
@@ -148,10 +148,10 @@ export function Footer({
                   href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 py-0.5 lg:py-0 text-slate-300 hover:text-orange-400"
+                  className="inline-flex items-center gap-1 min-h-[44px] lg:min-h-0 py-1 lg:py-0 text-slate-300 hover:text-orange-400 focus-visible:outline-2 focus-visible:outline-orange-400 rounded"
                 >
                   <span>Facebook</span>
-                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 lg:w-3 lg:h-3 shrink-0" />
                 </a>
               )}
             </div>
@@ -159,7 +159,7 @@ export function Footer({
         </div>
 
         {/* Slim Bottom Row: Copyright & MK Labs Credit */}
-        <div className="border-t border-slate-800 mt-2.5 pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[13px] leading-tight text-slate-400">
+        <div className="border-t border-slate-800 mt-2 pt-2 pb-[env(safe-area-inset-bottom)] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[13px] leading-tight text-slate-400">
           <p>
             © {new Date().getFullYear()} {storeSettings.storeName}. A product by{' '}
             <a
