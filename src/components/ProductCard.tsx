@@ -7,6 +7,7 @@ import { WhatsAppInquiryButton } from './WhatsAppInquiryButton';
 interface ProductCardProps {
   product: Product;
   whatsappConfig: WhatsAppConfig;
+  priority?: boolean;
   onSelectProduct: (slug: string) => void;
   onTrackWhatsAppClick: (payload: {
     productId: string;
@@ -21,6 +22,7 @@ interface ProductCardProps {
 export function ProductCard({
   product,
   whatsappConfig,
+  priority = false,
   onSelectProduct,
   onTrackWhatsAppClick,
   onUnconfiguredWhatsApp,
@@ -43,9 +45,11 @@ export function ProductCard({
       >
         <div className="absolute inset-0">
           <ResilientImage
-            src={product.images[0]}
+            src={product.primaryImage || product.images[0]}
             alt={product.name}
             fallbackLabel={product.name}
+            sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
+            priority={priority}
             className="w-full h-full object-cover"
           />
         </div>

@@ -1,8 +1,10 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { WhatsAppNoticeModal } from './components/WhatsAppModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { INITIAL_CATALOG_STATE } from './data/sampleCatalog';
+import { formatFirestoreUserMessage } from './firebase';
 import { useSEO } from './hooks/useSEO';
 import type { AdminTab } from './pages/AdminDashboard';
 import { AdminLoginPage } from './pages/AdminLoginPage';
@@ -11,15 +13,36 @@ import { HomePage } from './pages/HomePage';
 import { InfoPage } from './pages/InfoPages';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { type ShopFilterState, ShopPage } from './pages/ShopPage';
-import { catalogService } from './services/dataService';
+import { buildNonDestructiveRecoveryState } from './services/dataService';
+import {
+  deleteBrandFromFirestore,
+  deleteCategoryFromFirestore,
+  deleteProductFromFirestore,
+  hasLocalCatalogBackup,
+  migrateCatalogToFirestore,
+  type MigrationReport,
+  restoreMissingCatalogToFirestore,
+  saveBrandToFirestore,
+  saveCategoryToFirestore,
+  savePrivateAdminSettingsToFirestore,
+  saveProductToFirestore,
+  savePublicStoreSettingsToFirestore,
+  subscribeBrands,
+  subscribeCategories,
+  subscribePrivateAdminSettings,
+  subscribeProducts,
+  subscribePublicStoreSettings,
+} from './services/firestoreCatalogService';
 import type {
   Brand,
   CatalogStoreState,
   Category,
   Product,
   StoreSettings,
+  WhatsAppClickEvent,
   WhatsAppConfig,
 } from './types/catalog';
+import { sortCategoriesByOrder } from './utils/categoryTree';
 import { type AppRoute, buildPathForRoute, parseLocation } from './utils/routing';
 
 const AdminDashboard = lazy(() =>
@@ -43,35 +66,200 @@ function AppContent() {
     authNotice,
     clearAuthNotice,
     logoutAdmin,
-    sendVerification,
-    refreshUser,
   } = useAuth();
 
-  const [state, setState] = useState<CatalogStoreState>(() => catalogService.loadState());
-  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(
+    INITIAL_CATALOG_STATE.storeSettings
+  );
+  const [whatsappConfig, setWhatsappConfig] = useState<WhatsAppConfig>(
+    INITIAL_CATALOG_STATE.whatsappConfig
+  );
+  const [inquiryAnalytics, setInquiryAnalytics] = useState<WhatsAppClickEvent[]>([]);
+  const [migratedAt, setMigratedAt] = useState<string | undefined>(undefined);
+  const [hasLocalBackup] = useState<boolean>(() => hasLocalCatalogBackup());
+
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [brandsLoaded, setBrandsLoaded] = useState(false);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [publicSettingsLoaded, setPublicSettingsLoaded] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [syncRetryCount, setSyncRetryCount] = useState(0);
+
+  const recoveryCatalog = useMemo(() => buildNonDestructiveRecoveryState().state, []);
+  const autoRestoreAttemptedRef = useRef(false);
 
   const initialParsed = useMemo(
     () => parseLocation(window.location.pathname, window.location.search),
     []
   );
+  const initialSlugHydratedRef = useRef(false);
 
   const [route, setRoute] = useState<AppRoute>(initialParsed.route);
   const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(
     initialParsed.productSlug
   );
-  const [shopFilters, setShopFilters] = useState<ShopFilterState>(() => {
-    const loaded = catalogService.loadState();
-    const matchedCat = initialParsed.categorySlug
-      ? loaded.categories.find((c) => c.slug === initialParsed.categorySlug)
-      : undefined;
-    return {
-      ...DEFAULT_FILTERS,
-      categoryId: matchedCat ? matchedCat.id : 'all',
-      query: initialParsed.searchQuery,
-    };
+  const [shopFilters, setShopFilters] = useState<ShopFilterState>({
+    ...DEFAULT_FILTERS,
+    query: initialParsed.searchQuery,
   });
   const [adminTab, setAdminTab] = useState<AdminTab>('overview');
   const [waModalMessage, setWaModalMessage] = useState<string | null>(null);
+
+  const catalogLoading = !(
+    categoriesLoaded &&
+    brandsLoaded &&
+    productsLoaded &&
+    publicSettingsLoaded
+  );
+
+  // Real-time Cloud Firestore listeners for storefront & admin catalog
+  useEffect(() => {
+    if (authLoading) return;
+
+    setCatalogError(null);
+    setCategoriesLoaded(false);
+    setBrandsLoaded(false);
+    setProductsLoaded(false);
+    setPublicSettingsLoaded(false);
+
+    const handleSnapshotError = (err: unknown) => {
+      setCatalogError(formatFirestoreUserMessage(err));
+      setCategoriesLoaded(true);
+      setBrandsLoaded(true);
+      setProductsLoaded(true);
+      setPublicSettingsLoaded(true);
+    };
+
+    const unsubCats = subscribeCategories((list) => {
+      setCategories(list);
+      setCategoriesLoaded(true);
+      setCatalogError(null);
+    }, handleSnapshotError);
+
+    const unsubBrands = subscribeBrands((list) => {
+      setBrands(list);
+      setBrandsLoaded(true);
+    }, handleSnapshotError);
+
+    const unsubProducts = subscribeProducts(
+      isAdmin,
+      (list) => {
+        setProducts(list);
+        setProductsLoaded(true);
+      },
+      handleSnapshotError
+    );
+
+    const unsubPublicSettings = subscribePublicStoreSettings((payload) => {
+      setStoreSettings(payload.storeSettings);
+      setWhatsappConfig((prev) => ({
+        ...payload.whatsappConfig,
+        trackLocalClicks: prev.trackLocalClicks,
+      }));
+      setPublicSettingsLoaded(true);
+    }, handleSnapshotError);
+
+    let unsubPrivateSettings: (() => void) | undefined;
+    if (user && isAdmin) {
+      unsubPrivateSettings = subscribePrivateAdminSettings(
+        (payload) => {
+          setWhatsappConfig((prev) => ({
+            ...prev,
+            trackLocalClicks: payload.trackLocalClicks,
+          }));
+          setMigratedAt(payload.migratedAt);
+        },
+        () => {
+          // Non-blocking: private admin metadata defaults safely if doc not yet created
+        }
+      );
+    }
+
+    return () => {
+      unsubCats();
+      unsubBrands();
+      unsubProducts();
+      unsubPublicSettings();
+      if (unsubPrivateSettings) {
+        unsubPrivateSettings();
+      }
+    };
+  }, [authLoading, isAdmin, user, syncRetryCount]);
+
+  // When Firestore collections are empty (fresh or wiped DB), serve non-destructive
+  // browser backup + baseline categories/catalog on storefront until Firestore is populated.
+  const usingFallbackCatalog =
+    categoriesLoaded && categories.length === 0 && !catalogError;
+
+  const effectiveCategories = useMemo(
+    () =>
+      usingFallbackCatalog
+        ? sortCategoriesByOrder(recoveryCatalog.categories)
+        : sortCategoriesByOrder(categories),
+    [usingFallbackCatalog, recoveryCatalog.categories, categories]
+  );
+
+  const effectiveBrands = useMemo(
+    () =>
+      brandsLoaded && brands.length === 0 && usingFallbackCatalog
+        ? recoveryCatalog.brands
+        : brands,
+    [brandsLoaded, brands, usingFallbackCatalog, recoveryCatalog.brands]
+  );
+
+  const effectiveProducts = useMemo(
+    () =>
+      productsLoaded && products.length === 0 && usingFallbackCatalog
+        ? recoveryCatalog.products
+        : products,
+    [productsLoaded, products, usingFallbackCatalog, recoveryCatalog.products]
+  );
+
+  // Automatic non-destructive restore when verified admin connects to an empty categories collection
+  useEffect(() => {
+    if (
+      authLoading ||
+      !user ||
+      !isAdmin ||
+      !categoriesLoaded ||
+      !brandsLoaded ||
+      !productsLoaded ||
+      catalogError ||
+      categories.length > 0 ||
+      autoRestoreAttemptedRef.current
+    ) {
+      return;
+    }
+
+    autoRestoreAttemptedRef.current = true;
+    void restoreMissingCatalogToFirestore(user.uid).catch(() => {
+      // Admin can also re-run manual sync from Overview or Categories tab if needed
+    });
+  }, [
+    authLoading,
+    user,
+    isAdmin,
+    categoriesLoaded,
+    brandsLoaded,
+    productsLoaded,
+    catalogError,
+    categories.length,
+  ]);
+
+  // Hydrate initial URL category slug (/category/:slug or ?category=) once catalog resolves
+  useEffect(() => {
+    if (!categoriesLoaded || initialSlugHydratedRef.current) return;
+    initialSlugHydratedRef.current = true;
+    if (initialParsed.categorySlug) {
+      const matched = effectiveCategories.find((c) => c.slug === initialParsed.categorySlug);
+      if (matched) {
+        setShopFilters((prev) => ({ ...prev, categoryId: matched.id }));
+      }
+    }
+  }, [categoriesLoaded, effectiveCategories, initialParsed.categorySlug]);
 
   // Redirect unauthorized non-admin sessions away from /admin
   useEffect(() => {
@@ -92,7 +280,7 @@ function AppContent() {
       setSelectedProductSlug(parsed.productSlug);
       if (parsed.route === 'shop') {
         const cat = parsed.categorySlug
-          ? state.categories.find((c) => c.slug === parsed.categorySlug)
+          ? effectiveCategories.find((c) => c.slug === parsed.categorySlug)
           : undefined;
         setShopFilters((prev) => ({
           ...prev,
@@ -104,37 +292,72 @@ function AppContent() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [state.categories]);
+  }, [effectiveCategories]);
+
+  const storefrontState: CatalogStoreState = useMemo(
+    () => ({
+      categories: effectiveCategories,
+      brands: effectiveBrands,
+      products: effectiveProducts,
+      whatsappConfig,
+      storeSettings,
+      inquiryAnalytics,
+    }),
+    [
+      effectiveCategories,
+      effectiveBrands,
+      effectiveProducts,
+      whatsappConfig,
+      storeSettings,
+      inquiryAnalytics,
+    ]
+  );
+
+  // Admin Console displays exact live Firestore documents (without masking missing docs as synced)
+  const adminFirestoreState: CatalogStoreState = useMemo(
+    () => ({
+      categories: sortCategoriesByOrder(categories),
+      brands,
+      products,
+      whatsappConfig,
+      storeSettings,
+      inquiryAnalytics,
+    }),
+    [categories, brands, products, whatsappConfig, storeSettings, inquiryAnalytics]
+  );
 
   const activeProduct = useMemo(
     () =>
       selectedProductSlug
-        ? state.products.find(
+        ? storefrontState.products.find(
             (p) => p.slug === selectedProductSlug && p.published && !p.archived
           ) || null
         : null,
-    [state.products, selectedProductSlug]
+    [storefrontState.products, selectedProductSlug]
   );
 
   const activeProductBrand = useMemo(
-    () => (activeProduct ? state.brands.find((b) => b.id === activeProduct.brandId) : undefined),
-    [activeProduct, state.brands]
+    () =>
+      activeProduct
+        ? storefrontState.brands.find((b) => b.id === activeProduct.brandId)
+        : undefined,
+    [activeProduct, storefrontState.brands]
   );
 
   const activeProductCategory = useMemo(
     () =>
       activeProduct
-        ? state.categories.find((c) => c.id === activeProduct.categoryId)
+        ? storefrontState.categories.find((c) => c.id === activeProduct.categoryId)
         : undefined,
-    [activeProduct, state.categories]
+    [activeProduct, storefrontState.categories]
   );
 
   const activeShopCategory = useMemo(
     () =>
       shopFilters.categoryId !== 'all'
-        ? state.categories.find((c) => c.id === shopFilters.categoryId)
+        ? storefrontState.categories.find((c) => c.id === shopFilters.categoryId)
         : undefined,
-    [shopFilters.categoryId, state.categories]
+    [shopFilters.categoryId, storefrontState.categories]
   );
 
   const canonicalPath = useMemo(() => {
@@ -151,7 +374,7 @@ function AppContent() {
   }, [route, activeProduct, activeShopCategory]);
 
   const seoMeta = useMemo(() => {
-    const brandName = state.storeSettings.storeName;
+    const brandName = storeSettings.storeName;
     if (route === 'product') {
       if (activeProduct) {
         return {
@@ -215,16 +438,16 @@ function AppContent() {
     if (route === 'admin') {
       return {
         title: isAdmin ? `Admin Console | ${brandName}` : `Admin Sign In | ${brandName}`,
-        description: state.storeSettings.seoDescription,
+        description: storeSettings.seoDescription,
         noIndex: true,
       };
     }
     return {
-      title: state.storeSettings.seoTitle,
-      description: state.storeSettings.seoDescription,
+      title: storeSettings.seoTitle,
+      description: storeSettings.seoDescription,
       noIndex: false,
     };
-  }, [route, activeProduct, activeShopCategory, state.storeSettings, isAdmin]);
+  }, [route, activeProduct, activeShopCategory, storeSettings, isAdmin]);
 
   useSEO({
     title: seoMeta.title,
@@ -233,8 +456,8 @@ function AppContent() {
     noIndex: seoMeta.noIndex,
     product: route === 'product' ? activeProduct : null,
     brand: activeProductBrand,
-    category: activeProductCategory,
-    storeSettings: state.storeSettings,
+    category: route === 'product' ? activeProductCategory : activeShopCategory,
+    storeSettings,
   });
 
   useEffect(() => {
@@ -263,11 +486,11 @@ function AppContent() {
       }
       pushPath(
         buildPathForRoute(nextRoute, {
-          categories: state.categories,
+          categories: storefrontState.categories,
         })
       );
     },
-    [state.categories, clearAuthNotice]
+    [storefrontState.categories, clearAuthNotice]
   );
 
   const handleSelectProduct = useCallback((slug: string) => {
@@ -284,11 +507,11 @@ function AppContent() {
       pushPath(
         buildPathForRoute('shop', {
           categoryId,
-          categories: state.categories,
+          categories: storefrontState.categories,
         })
       );
     },
-    [state.categories]
+    [storefrontState.categories]
   );
 
   const handleSelectBrand = useCallback((brandId: string) => {
@@ -312,20 +535,12 @@ function AppContent() {
         buildPathForRoute('shop', {
           categoryId: next.categoryId,
           query: next.query,
-          categories: state.categories,
+          categories: storefrontState.categories,
         })
       );
     },
-    [state.categories]
+    [storefrontState.categories]
   );
-
-  const applyMutation = (updater: (prev: CatalogStoreState) => CatalogStoreState) => {
-    setState((prev) => {
-      const next = updater(prev);
-      setStorageWarning(catalogService.getLastStorageWarning());
-      return next;
-    });
-  };
 
   const handleTrackWhatsAppClick = useCallback(
     (payload: {
@@ -335,19 +550,23 @@ function AppContent() {
       price: number;
       source: 'pdp' | 'card' | 'general';
     }) => {
-      applyMutation((prev) =>
-        catalogService.recordWhatsAppClick(prev, {
-          id: `wa-${Date.now()}`,
-          productId: payload.productId,
-          productName: payload.productName,
-          sku: payload.sku,
-          price: payload.price,
-          source: payload.source,
-          timestamp: new Date().toISOString(),
-        })
+      if (!whatsappConfig.trackLocalClicks) return;
+      setInquiryAnalytics((prev) =>
+        [
+          {
+            id: `wa-${Date.now()}`,
+            productId: payload.productId,
+            productName: payload.productName,
+            sku: payload.sku,
+            price: payload.price,
+            source: payload.source,
+            timestamp: new Date().toISOString(),
+          },
+          ...prev,
+        ].slice(0, 50)
       );
     },
-    []
+    [whatsappConfig.trackLocalClicks]
   );
 
   const handleAdminLogout = useCallback(async () => {
@@ -356,52 +575,68 @@ function AppContent() {
     pushPath('/');
   }, [logoutAdmin]);
 
-  // Admin mutation handlers (guarded to authenticated admin session)
-  const handleUpsertProduct = (product: Product) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.upsertProduct(prev, product));
+  // Admin Cloud Firestore mutation handlers (strictly guarded to verified admin)
+  const requireVerifiedAdminUid = (): string => {
+    if (!user || !isAdmin) {
+      throw new Error('Verified administrator authentication is required for Firestore writes.');
+    }
+    return user.uid;
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.deleteProduct(prev, productId));
+  const handleUpsertProduct = async (product: Product): Promise<void> => {
+    const uid = requireVerifiedAdminUid();
+    await saveProductToFirestore(product, uid);
   };
 
-  const handleUpsertCategory = (category: Category) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.upsertCategory(prev, category));
+  const handleDeleteProduct = async (productId: string): Promise<void> => {
+    requireVerifiedAdminUid();
+    await deleteProductFromFirestore(productId);
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.deleteCategory(prev, categoryId));
+  const handleUpsertCategory = async (category: Category): Promise<void> => {
+    const uid = requireVerifiedAdminUid();
+    await saveCategoryToFirestore(category, uid);
   };
 
-  const handleUpsertBrand = (brand: Brand) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.upsertBrand(prev, brand));
+  const handleDeleteCategory = async (categoryId: string): Promise<void> => {
+    requireVerifiedAdminUid();
+    await deleteCategoryFromFirestore(categoryId);
   };
 
-  const handleDeleteBrand = (brandId: string) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.deleteBrand(prev, brandId));
+  const handleUpsertBrand = async (brand: Brand): Promise<void> => {
+    const uid = requireVerifiedAdminUid();
+    await saveBrandToFirestore(brand, uid);
   };
 
-  const handleUpdateWhatsAppConfig = (config: WhatsAppConfig) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.updateWhatsAppConfig(prev, config));
+  const handleDeleteBrand = async (brandId: string): Promise<void> => {
+    requireVerifiedAdminUid();
+    await deleteBrandFromFirestore(brandId);
   };
 
-  const handleUpdateStoreSettings = (settings: StoreSettings) => {
-    if (!isAdmin) return;
-    applyMutation((prev) => catalogService.updateStoreSettings(prev, settings));
+  const handleUpdateWhatsAppConfig = async (config: WhatsAppConfig): Promise<void> => {
+    const uid = requireVerifiedAdminUid();
+    const { trackLocalClicks, ...publicWa } = config;
+    await Promise.all([
+      savePublicStoreSettingsToFirestore(storeSettings, publicWa, uid),
+      savePrivateAdminSettingsToFirestore(trackLocalClicks, uid),
+    ]);
   };
 
-  const handleResetSampleData = () => {
-    if (!isAdmin) return;
-    setState(catalogService.resetToSampleData());
-    setStorageWarning(null);
+  const handleUpdateStoreSettings = async (nextSettings: StoreSettings): Promise<void> => {
+    const uid = requireVerifiedAdminUid();
+    const { trackLocalClicks: _ignored, ...publicWa } = whatsappConfig;
+    await savePublicStoreSettingsToFirestore(nextSettings, publicWa, uid);
   };
+
+  const handleMigrateToFirestore = async (
+    mode: 'localStorage' | 'sampleCatalog' | 'restoreCombined'
+  ): Promise<MigrationReport> => {
+    const uid = requireVerifiedAdminUid();
+    return migrateCatalogToFirestore(uid, mode);
+  };
+
+  const isCatalogView =
+    route === 'home' || route === 'shop' || route === 'categories' || route === 'product';
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
@@ -430,12 +665,37 @@ function AppContent() {
         </div>
       )}
 
+      {catalogError && route !== 'admin' && (
+        <div
+          role="alert"
+          className="bg-amber-50 border-b border-amber-200 px-3 sm:px-6 py-2.5 text-xs text-amber-950"
+        >
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <p className="font-medium">{catalogError}</p>
+            <button
+              type="button"
+              onClick={() => setSyncRetryCount((c) => c + 1)}
+              className="font-semibold text-amber-900 hover:text-slate-900 underline shrink-0"
+            >
+              Retry Connection
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
-        {route === 'home' && (
+        {isCatalogView && catalogLoading && (
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-14 text-center space-y-2">
+            <div className="w-7 h-7 border-2 border-slate-300 border-t-orange-600 rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-slate-600">Loading TechnHobbies catalog...</p>
+          </div>
+        )}
+
+        {route === 'home' && !catalogLoading && (
           <HomePage
-            products={state.products}
-            categories={state.categories}
-            whatsappConfig={state.whatsappConfig}
+            products={storefrontState.products}
+            categories={storefrontState.categories}
+            whatsappConfig={whatsappConfig}
             onNavigate={handleNavigate}
             onSelectCategory={handleSelectCategory}
             onSelectProduct={handleSelectProduct}
@@ -444,13 +704,13 @@ function AppContent() {
           />
         )}
 
-        {route === 'shop' && (
+        {route === 'shop' && !catalogLoading && (
           <ShopPage
-            products={state.products}
-            categories={state.categories}
-            brands={state.brands}
+            products={storefrontState.products}
+            categories={storefrontState.categories}
+            brands={storefrontState.brands}
             filters={shopFilters}
-            whatsappConfig={state.whatsappConfig}
+            whatsappConfig={whatsappConfig}
             onChangeFilters={handleChangeShopFilters}
             onSelectProduct={handleSelectProduct}
             onTrackWhatsAppClick={handleTrackWhatsAppClick}
@@ -458,20 +718,22 @@ function AppContent() {
           />
         )}
 
-        {route === 'categories' && (
+        {route === 'categories' && !catalogLoading && (
           <CategoriesPage
-            categories={state.categories}
+            categories={storefrontState.categories}
+            products={storefrontState.products}
             onSelectCategory={handleSelectCategory}
           />
         )}
 
-        {route === 'product' && activeProduct && (
+        {route === 'product' && !catalogLoading && activeProduct && (
           <ProductDetailPage
             product={activeProduct}
-            allProducts={state.products}
+            allProducts={storefrontState.products}
+            categories={storefrontState.categories}
             brand={activeProductBrand}
             category={activeProductCategory}
-            whatsappConfig={state.whatsappConfig}
+            whatsappConfig={whatsappConfig}
             onBackToShop={() => handleNavigate('shop')}
             onSelectCategory={handleSelectCategory}
             onSelectBrand={handleSelectBrand}
@@ -481,7 +743,7 @@ function AppContent() {
           />
         )}
 
-        {route === 'product' && !activeProduct && (
+        {route === 'product' && !catalogLoading && !activeProduct && (
           <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
             <h1 className="font-display text-2xl font-bold text-slate-900">
               Product Not Found or Unpublished
@@ -502,8 +764,8 @@ function AppContent() {
         {(route === 'about' || route === 'privacy' || route === 'terms') && (
           <InfoPage
             mode={route}
-            storeSettings={state.storeSettings}
-            whatsappConfig={state.whatsappConfig}
+            storeSettings={storeSettings}
+            whatsappConfig={whatsappConfig}
             onTrackWhatsAppClick={handleTrackWhatsAppClick}
             onUnconfiguredWhatsApp={(msg) => setWaModalMessage(msg)}
           />
@@ -531,7 +793,7 @@ function AppContent() {
             }
           >
             <AdminDashboard
-              state={state}
+              state={adminFirestoreState}
               activeTab={adminTab}
               onChangeTab={setAdminTab}
               onUpsertProduct={handleUpsertProduct}
@@ -542,13 +804,15 @@ function AppContent() {
               onDeleteBrand={handleDeleteBrand}
               onUpdateWhatsAppConfig={handleUpdateWhatsAppConfig}
               onUpdateStoreSettings={handleUpdateStoreSettings}
-              onResetSampleData={handleResetSampleData}
+              onMigrateToFirestore={handleMigrateToFirestore}
+              hasLocalBackup={hasLocalBackup}
+              migratedAt={migratedAt}
+              catalogLoading={catalogLoading}
+              catalogError={catalogError}
+              onRetryCatalogSync={() => setSyncRetryCount((c) => c + 1)}
               adminEmail={user.email || 'technhobbies268@gmail.com'}
               emailVerified={user.emailVerified}
               onLogout={handleAdminLogout}
-              onSendVerification={sendVerification}
-              onRefreshAuthUser={refreshUser}
-              storageWarning={storageWarning}
             />
           </Suspense>
         )}
@@ -556,8 +820,8 @@ function AppContent() {
 
       {route !== 'admin' && (
         <Footer
-          storeSettings={state.storeSettings}
-          whatsappConfig={state.whatsappConfig}
+          storeSettings={storeSettings}
+          whatsappConfig={whatsappConfig}
           onNavigate={handleNavigate}
           onUnconfiguredWhatsApp={(msg) => setWaModalMessage(msg)}
         />

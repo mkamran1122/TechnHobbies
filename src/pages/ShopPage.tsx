@@ -1,5 +1,5 @@
 import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import type {
   Brand,
@@ -9,6 +9,12 @@ import type {
   StockStatus,
   WhatsAppConfig,
 } from '../types/catalog';
+import {
+  getCategoryAncestors,
+  getChildCategories,
+  getTopLevelCategories,
+  productMatchesCategoryFilter,
+} from '../utils/categoryTree';
 import { getEffectiveStockStatus } from '../utils/stock';
 
 export interface ShopFilterState {
@@ -38,6 +44,8 @@ interface ShopPageProps {
   onUnconfiguredWhatsApp: (previewMessage: string) => void;
 }
 
+const PAGE_SIZE = 12;
+
 export function ShopPage({
   products,
   categories,
@@ -50,19 +58,51 @@ export function ShopPage({
   onUnconfiguredWhatsApp,
 }: ShopPageProps) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [
+    filters.query,
+    filters.categoryId,
+    filters.brandId,
+    filters.condition,
+    filters.stockStatus,
+    filters.sortBy,
+  ]);
 
   const publishedProducts = useMemo(
     () => products.filter((p) => p.published && !p.archived),
     [products]
   );
 
+  const topLevelCategories = useMemo(
+    () => getTopLevelCategories(categories),
+    [categories]
+  );
+
   const activeCategory = categories.find((c) => c.id === filters.categoryId);
+  const categoryAncestors = useMemo(
+    () =>
+      activeCategory
+        ? getCategoryAncestors(activeCategory.id, categories)
+        : [],
+    [activeCategory, categories]
+  );
+  const activeRootCategory = categoryAncestors[0] || activeCategory;
+  const activeSubcategories = useMemo(
+    () =>
+      activeRootCategory
+        ? getChildCategories(activeRootCategory.id, categories)
+        : [],
+    [activeRootCategory, categories]
+  );
 
   const filteredProducts = useMemo(() => {
     const q = filters.query.trim().toLowerCase();
 
     const matched = publishedProducts.filter((product) => {
-      if (filters.categoryId !== 'all' && product.categoryId !== filters.categoryId) {
+      if (!productMatchesCategoryFilter(product, filters.categoryId, categories)) {
         return false;
       }
       if (filters.brandId !== 'all' && product.brandId !== filters.brandId) {
@@ -77,12 +117,16 @@ export function ShopPage({
       if (q) {
         const brandName = brands.find((b) => b.id === product.brandId)?.name.toLowerCase() || '';
         const catName = categories.find((c) => c.id === product.categoryId)?.name.toLowerCase() || '';
+        const subName = product.subcategoryId
+          ? categories.find((c) => c.id === product.subcategoryId)?.name.toLowerCase() || ''
+          : '';
         const haystack = [
           product.name,
           product.sku,
           product.shortDescription,
           brandName,
           catName,
+          subName,
         ]
           .join(' ')
           .toLowerCase();
@@ -141,32 +185,74 @@ export function ShopPage({
       </div>
 
       {/* Category Filter Row (edge-to-edge smooth touch scroll on mobile) */}
-      <div className="-mx-3 px-3 sm:mx-0 sm:px-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-        <button
-          type="button"
-          onClick={() => onChangeFilters({ ...filters, categoryId: 'all' })}
-          className={`px-3.5 py-2 min-h-[44px] text-xs sm:text-[13px] font-semibold rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 ${
-            filters.categoryId === 'all'
-              ? 'bg-slate-900 text-white'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
+      <div className="space-y-2">
+        <div className="-mx-3 px-3 sm:mx-0 sm:px-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           <button
-            key={cat.id}
             type="button"
-            onClick={() => onChangeFilters({ ...filters, categoryId: cat.id })}
+            onClick={() => onChangeFilters({ ...filters, categoryId: 'all' })}
             className={`px-3.5 py-2 min-h-[44px] text-xs sm:text-[13px] font-semibold rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 ${
-              filters.categoryId === cat.id
+              filters.categoryId === 'all'
                 ? 'bg-slate-900 text-white'
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            {cat.name}
+            All
           </button>
-        ))}
+          {topLevelCategories.map((cat) => {
+            const isActiveTop =
+              filters.categoryId === cat.id || activeRootCategory?.id === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => onChangeFilters({ ...filters, categoryId: cat.id })}
+                className={`px-3.5 py-2 min-h-[44px] text-xs sm:text-[13px] font-semibold rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 ${
+                  isActiveTop
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Subcategory Filter Row (shown when active parent category has subcategories) */}
+        {activeRootCategory && activeSubcategories.length > 0 && (
+          <div
+            aria-label={`${activeRootCategory.name} subcategories`}
+            className="-mx-3 px-3 sm:mx-0 sm:px-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"
+          >
+            <button
+              type="button"
+              onClick={() =>
+                onChangeFilters({ ...filters, categoryId: activeRootCategory.id })
+              }
+              className={`px-3 py-1.5 min-h-[44px] sm:min-h-[38px] text-xs font-semibold rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 ${
+                filters.categoryId === activeRootCategory.id
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              All {activeRootCategory.name}
+            </button>
+            {activeSubcategories.map((sub) => (
+              <button
+                key={sub.id}
+                type="button"
+                onClick={() => onChangeFilters({ ...filters, categoryId: sub.id })}
+                className={`px-3 py-1.5 min-h-[44px] sm:min-h-[38px] text-xs font-semibold rounded-lg whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-orange-600 ${
+                  filters.categoryId === sub.id
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {sub.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Search & Attribute Filter Bar (compact collapsible on mobile, full grid on desktop) */}
@@ -329,18 +415,36 @@ export function ShopPage({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              whatsappConfig={whatsappConfig}
-              onSelectProduct={onSelectProduct}
-              onTrackWhatsAppClick={onTrackWhatsAppClick}
-              onUnconfiguredWhatsApp={onUnconfiguredWhatsApp}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {filteredProducts.slice(0, visibleCount).map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                whatsappConfig={whatsappConfig}
+                priority={index < 2}
+                onSelectProduct={onSelectProduct}
+                onTrackWhatsAppClick={onTrackWhatsAppClick}
+                onUnconfiguredWhatsApp={onUnconfiguredWhatsApp}
+              />
+            ))}
+          </div>
+
+          {filteredProducts.length > visibleCount && (
+            <div className="pt-2 flex flex-col items-center gap-2">
+              <p className="text-xs text-slate-500 tabular-nums">
+                Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length} products
+              </p>
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                className="px-6 py-2.5 min-h-[44px] text-sm font-semibold text-slate-900 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg focus-visible:outline-2 focus-visible:outline-orange-600"
+              >
+                Load More Products ({filteredProducts.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

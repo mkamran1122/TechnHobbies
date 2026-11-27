@@ -2,6 +2,11 @@ import { useEffect } from 'react';
 import type { Brand, Category, Product, StoreSettings } from '../types/catalog';
 import { getEffectiveStockStatus } from '../utils/stock';
 
+import { isValidImageSource } from '../utils/url';
+
+export const CANONICAL_ORIGIN = 'https://technhobbies.com';
+const DEFAULT_SOCIAL_IMAGE = `${CANONICAL_ORIGIN}/src/assets/images/hero_rc_workshop_1795456013906.jpg`;
+
 interface SEOOptions {
   title: string;
   description: string;
@@ -11,6 +16,17 @@ interface SEOOptions {
   brand?: Brand | null;
   category?: Category | null;
   storeSettings: StoreSettings;
+}
+
+function toAbsolutePublicImage(src: string): string | null {
+  const trimmed = src.trim();
+  if (!isValidImageSource(trimmed)) {
+    return null;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `${CANONICAL_ORIGIN}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
 }
 
 export function useSEO({
@@ -26,7 +42,23 @@ export function useSEO({
   useEffect(() => {
     document.title = title;
 
-    const canonicalUrl = `${window.location.origin}${canonicalPath}`;
+    const normalizedPath = canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`;
+    const canonicalUrl = `${CANONICAL_ORIGIN}${normalizedPath}`;
+
+    const rawOrderedImages =
+      product && product.published && !product.archived
+        ? product.primaryImage
+          ? [product.primaryImage, ...product.images.filter((img) => img !== product.primaryImage)]
+          : product.images
+        : [];
+    const productImages = Array.from(
+      new Set(
+        rawOrderedImages
+          .map(toAbsolutePublicImage)
+          .filter((img): img is string => img !== null)
+      )
+    );
+    const socialImage = productImages[0] || DEFAULT_SOCIAL_IMAGE;
 
     const setMeta = (selector: string, content: string, attrName = 'name', attrVal = '') => {
       let el = document.querySelector(selector);
@@ -44,8 +76,10 @@ export function useSEO({
     setMeta('meta[property="og:title"]', title, 'property', 'og:title');
     setMeta('meta[property="og:description"]', description, 'property', 'og:description');
     setMeta('meta[property="og:url"]', canonicalUrl, 'property', 'og:url');
+    setMeta('meta[property="og:image"]', socialImage, 'property', 'og:image');
     setMeta('meta[name="twitter:title"]', title, 'name', 'twitter:title');
     setMeta('meta[name="twitter:description"]', description, 'name', 'twitter:description');
+    setMeta('meta[name="twitter:image"]', socialImage, 'name', 'twitter:image');
     setMeta(
       'meta[name="robots"]',
       noIndex ? 'noindex, nofollow' : 'index, follow',
@@ -66,6 +100,12 @@ export function useSEO({
       existingScript.remove();
     }
 
+    if (noIndex) {
+      return;
+    }
+
+    const graphNodes: Record<string, unknown>[] = [];
+
     if (product && product.published && !product.archived) {
       const effectiveStock = getEffectiveStockStatus(product);
       const availabilityMap: Record<Product['stockStatus'], string> = {
@@ -75,17 +115,12 @@ export function useSEO({
         'Out of Stock': 'https://schema.org/OutOfStock',
       };
 
-      const productImages = product.images
-        .filter(Boolean)
-        .map((img) => (img.startsWith('http') ? img : `${window.location.origin}${img}`));
-
-      const schema = {
-        '@context': 'https://schema.org',
+      graphNodes.push({
         '@type': 'Product',
         name: product.name,
         sku: product.sku,
         description: product.shortDescription,
-        image: productImages.length > 0 ? productImages : undefined,
+        image: productImages.length > 0 ? productImages : [DEFAULT_SOCIAL_IMAGE],
         url: canonicalUrl,
         category: category?.name || 'RC & Hobby Hardware',
         brand: brand
@@ -111,12 +146,62 @@ export function useSEO({
             name: storeSettings.storeName,
           },
         },
-      };
+      });
 
+      const breadcrumbItems: Record<string, unknown>[] = [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${CANONICAL_ORIGIN}/` },
+        { '@type': 'ListItem', position: 2, name: 'Shop', item: `${CANONICAL_ORIGIN}/shop` },
+      ];
+      if (category) {
+        breadcrumbItems.push({
+          '@type': 'ListItem',
+          position: 3,
+          name: category.name,
+          item: `${CANONICAL_ORIGIN}/category/${encodeURIComponent(category.slug)}`,
+        });
+      }
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: breadcrumbItems.length + 1,
+        name: product.name,
+        item: canonicalUrl,
+      });
+
+      graphNodes.push({
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbItems,
+      });
+    } else if (normalizedPath !== '/') {
+      const breadcrumbItems: Record<string, unknown>[] = [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${CANONICAL_ORIGIN}/` },
+      ];
+      if (category && normalizedPath.startsWith('/category/')) {
+        breadcrumbItems.push(
+          { '@type': 'ListItem', position: 2, name: 'Shop', item: `${CANONICAL_ORIGIN}/shop` },
+          { '@type': 'ListItem', position: 3, name: category.name, item: canonicalUrl }
+        );
+      } else {
+        breadcrumbItems.push({
+          '@type': 'ListItem',
+          position: 2,
+          name: title.split('|')[0].trim(),
+          item: canonicalUrl,
+        });
+      }
+      graphNodes.push({
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbItems,
+      });
+    }
+
+    if (graphNodes.length > 0) {
       const script = document.createElement('script');
       script.id = 'dynamic-seo-jsonld';
       script.type = 'application/ld+json';
-      script.textContent = JSON.stringify(schema);
+      script.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': graphNodes,
+      });
       document.head.appendChild(script);
     }
   }, [title, description, canonicalPath, noIndex, product, brand, category, storeSettings]);

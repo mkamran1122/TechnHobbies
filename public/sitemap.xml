@@ -1,117 +1,142 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/</loc>
+    <loc>https://technhobbies.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>/shop</loc>
+    <loc>https://technhobbies.com/shop</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>/categories</loc>
+    <loc>https://technhobbies.com/categories</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/about</loc>
+    <loc>https://technhobbies.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>/privacy</loc>
+    <loc>https://technhobbies.com/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>/terms</loc>
+    <loc>https://technhobbies.com/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>/category/rc-cars-crawlers</loc>
+    <loc>https://technhobbies.com/category/rc-trucks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/fpv-drones</loc>
+    <loc>https://technhobbies.com/category/rc-buggy</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/rc-airplanes</loc>
+    <loc>https://technhobbies.com/category/rc-drift</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/rc-helicopters</loc>
+    <loc>https://technhobbies.com/category/rc-crawler</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/radios-receivers</loc>
+    <loc>https://technhobbies.com/category/rc-engine-car</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/batteries-chargers</loc>
+    <loc>https://technhobbies.com/category/rc-car-shells</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/category/motors-escs-parts</loc>
+    <loc>https://technhobbies.com/category/fpv-drones</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/trailfinder-overland-4x4-rtr</loc>
+    <loc>https://technhobbies.com/category/rc-airplanes</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/kraton-6s-blx-speed-monster-truck</loc>
+    <loc>https://technhobbies.com/category/rc-helicopters</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/nazgul-evoque-f5d-o3-fpv-drone</loc>
+    <loc>https://technhobbies.com/category/radios-receivers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/skystreak-40-sport-trainer-rc-airplane</loc>
+    <loc>https://technhobbies.com/category/batteries-chargers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/dominator-450l-flybarless-3d-helicopter</loc>
+    <loc>https://technhobbies.com/category/motors-escs-parts</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/horizon-x20-edgetx-elrs-radio-transmitter</loc>
+    <loc>https://technhobbies.com/product/trailfinder-overland-4x4-rtr</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/d6-pro-dual-channel-smart-lipo-charger</loc>
+    <loc>https://technhobbies.com/product/kraton-6s-blx-speed-monster-truck</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/turnigy-graphene-4s-5000mah-65c-lipo</loc>
+    <loc>https://technhobbies.com/product/nazgul-evoque-f5d-o3-fpv-drone</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/max10-g2-120a-waterproof-brushless-combo</loc>
+    <loc>https://technhobbies.com/product/skystreak-40-sport-trainer-rc-airplane</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/product/er8-8ch-elrs-pwm-telemetry-receiver</loc>
+    <loc>https://technhobbies.com/product/dominator-450l-flybarless-3d-helicopter</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://technhobbies.com/product/horizon-x20-edgetx-elrs-radio-transmitter</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://technhobbies.com/product/d6-pro-dual-channel-smart-lipo-charger</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://technhobbies.com/product/turnigy-graphene-4s-5000mah-65c-lipo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://technhobbies.com/product/max10-g2-120a-waterproof-brushless-combo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://technhobbies.com/product/er8-8ch-elrs-pwm-telemetry-receiver</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -39,11 +39,16 @@ export function Footer({
           {/* Left: Logo, WhatsApp & Email */}
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2">
-              <img
-                src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
-                alt="TechnHobbies Logo"
-                className="w-7 h-7 object-contain bg-white rounded p-0.5 shrink-0"
-              />
+              <picture className="shrink-0">
+                <source type="image/webp" srcSet="/assets/aistudio/TNH_Logo_PNG_99ea69a1.webp" />
+                <img
+                  src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
+                  alt="TechnHobbies Logo"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 object-contain bg-white rounded p-0.5 shrink-0"
+                />
+              </picture>
               <span className="font-display text-[15px] font-bold text-white leading-tight">
                 {storeSettings.storeName}
               </span>

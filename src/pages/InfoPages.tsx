@@ -28,11 +28,16 @@ export function InfoPage({
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-10">
         <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-8 space-y-5">
           <div className="flex items-center gap-3.5 border-b border-slate-200 pb-4 sm:pb-5">
-            <img
-              src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
-              alt="TechnHobbies Logo"
-              className="w-12 h-12 sm:w-14 sm:h-14 object-contain shrink-0"
-            />
+            <picture className="shrink-0">
+              <source type="image/webp" srcSet="/assets/aistudio/TNH_Logo_PNG_99ea69a1.webp" />
+              <img
+                src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
+                alt="TechnHobbies Logo"
+                width={56}
+                height={56}
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain shrink-0"
+              />
+            </picture>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-orange-700">
                 About {storeSettings.storeName}

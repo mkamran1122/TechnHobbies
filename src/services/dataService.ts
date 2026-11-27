@@ -3,85 +3,18 @@ import type {
   Brand,
   CatalogStoreState,
   Category,
-  CommunityPost,
-  CustomerReview,
-  GalleryItem,
-  LearningArticle,
   Product,
   StoreSettings,
   WhatsAppClickEvent,
   WhatsAppConfig,
 } from '../types/catalog';
 
-const STORAGE_KEY = 'technhobbies_catalog_state_v1';
-const TAXONOMY_MIGRATION_KEY = 'technhobbies_taxonomy_v2_migrated';
-
-const NEW_RC_CATEGORY_IDS = [
-  'cat-rc-trucks',
-  'cat-rc-buggy',
-  'cat-rc-drift',
-  'cat-rc-crawler',
-  'cat-rc-engine-car',
-  'cat-rc-car-shells',
-] as const;
-
-function isLegacyCarsCategory(cat: Category): boolean {
-  return (
-    cat.id === 'cat-cars' ||
-    cat.slug === 'rc-cars-crawlers' ||
-    cat.name.trim().toLowerCase() === 'rc cars & crawlers'
-  );
-}
-
-function inferNewRcCategoryId(product: Product): string {
-  const titleSummary = `${product.name} ${product.shortDescription}`;
-  if (
-    /\b(body\s*shell|car\s*shell|clear\s*body|lexan\s*body|polycarbonate\s*body|unpainted\s*body|shells?)\b/i.test(
-      titleSummary
-    )
-  ) {
-    return 'cat-rc-car-shells';
-  }
-
-  const fullText = [
-    product.name,
-    product.shortDescription,
-    product.description,
-    ...(product.specs || []).map((s) => `${s.label} ${s.value}`),
-  ].join(' ');
-
-  if (
-    /\b(nitro|gasoline|petrol|gas-powered|2-stroke|glow\s*plug|cc\s*engine|engine\s*car)\b/i.test(
-      fullText
-    )
-  ) {
-    return 'cat-rc-engine-car';
-  }
-  if (/\b(crawler|rock\s*crawler|trail\s*crawler|portal\s*axle)\b/i.test(fullText)) {
-    return 'cat-rc-crawler';
-  }
-  if (/\b(drift|drifting)\b/i.test(fullText)) {
-    return 'cat-rc-drift';
-  }
-  if (/\b(buggy|buggies)\b/i.test(fullText)) {
-    return 'cat-rc-buggy';
-  }
-  if (
-    /\b(monster\s*truck|truggy|short\s*course|stadium\s*truck|desert\s*truck|rc\s*truck|trucks?)\b/i.test(
-      fullText
-    )
-  ) {
-    return 'cat-rc-trucks';
-  }
-
-  return '';
-}
+export const STORAGE_KEY = 'technhobbies_catalog_state_v1';
 
 /**
  * Modular Catalog Repository Interface.
- * Currently backed by LocalSampleAdapter (local sample data + browser localStorage).
- * Structured so a future Firebase Firestore / REST adapter can replace this without
- * refactoring UI components.
+ * Preserves browser localStorage catalog state non-destructively alongside
+ * Cloud Firestore synchronization and recovery.
  */
 export interface ICatalogService {
   loadState(): CatalogStoreState;
@@ -94,15 +27,133 @@ export interface ICatalogService {
   deleteCategory(state: CatalogStoreState, categoryId: string): CatalogStoreState;
   upsertBrand(state: CatalogStoreState, brand: Brand): CatalogStoreState;
   deleteBrand(state: CatalogStoreState, brandId: string): CatalogStoreState;
-  upsertArticle(state: CatalogStoreState, article: LearningArticle): CatalogStoreState;
-  deleteArticle(state: CatalogStoreState, articleId: string): CatalogStoreState;
-  upsertGalleryItem(state: CatalogStoreState, item: GalleryItem): CatalogStoreState;
-  deleteGalleryItem(state: CatalogStoreState, itemId: string): CatalogStoreState;
-  addCommunityPost(state: CatalogStoreState, post: CommunityPost): CatalogStoreState;
-  addReview(state: CatalogStoreState, review: CustomerReview): CatalogStoreState;
   updateWhatsAppConfig(state: CatalogStoreState, config: WhatsAppConfig): CatalogStoreState;
   updateStoreSettings(state: CatalogStoreState, settings: StoreSettings): CatalogStoreState;
   recordWhatsAppClick(state: CatalogStoreState, event: WhatsAppClickEvent): CatalogStoreState;
+}
+
+function normalizeCategory(raw: Category): Category {
+  const parentId = typeof raw.parentId === 'string' && raw.parentId.trim() ? raw.parentId.trim() : undefined;
+  return {
+    ...raw,
+    ...(parentId ? { parentId } : {}),
+  };
+}
+
+function normalizeProduct(raw: Product): Product {
+  const { warrantyInfo: _w, shippingInfo: _s, ...rest } = raw;
+  const subcategoryId =
+    typeof rest.subcategoryId === 'string' && rest.subcategoryId.trim()
+      ? rest.subcategoryId.trim()
+      : undefined;
+  return {
+    ...rest,
+    ...(subcategoryId ? { subcategoryId } : {}),
+    archived: Boolean(rest.archived),
+  };
+}
+
+/**
+ * Reads localStorage catalog data strictly non-destructively (never deletes,
+ * renames, or rewrites user categories/subcategories/products) and merges any
+ * missing baseline defaults only if absent by both id and slug.
+ */
+export function buildNonDestructiveRecoveryState(): {
+  state: CatalogStoreState;
+  hasLocalBackup: boolean;
+} {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return { state: INITIAL_CATALOG_STATE, hasLocalBackup: false };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<CatalogStoreState>;
+    const localCategories = Array.isArray(parsed.categories)
+      ? parsed.categories.map(normalizeCategory)
+      : [];
+    const localBrands = Array.isArray(parsed.brands) ? parsed.brands : [];
+    const localProducts = Array.isArray(parsed.products)
+      ? parsed.products.map(normalizeProduct)
+      : [];
+
+    // Keep all local categories first, then append any missing baseline categories
+    const catIds = new Set(localCategories.map((c) => c.id));
+    const catSlugs = new Set(localCategories.map((c) => c.slug.trim().toLowerCase()));
+    const mergedCategories = [...localCategories];
+    for (const defCat of INITIAL_CATALOG_STATE.categories) {
+      if (!catIds.has(defCat.id) && !catSlugs.has(defCat.slug.trim().toLowerCase())) {
+        mergedCategories.push(defCat);
+        catIds.add(defCat.id);
+        catSlugs.add(defCat.slug.trim().toLowerCase());
+      }
+    }
+
+    // Keep all local brands first, then append any missing baseline brands
+    const brandIds = new Set(localBrands.map((b) => b.id));
+    const brandSlugs = new Set(localBrands.map((b) => b.slug.trim().toLowerCase()));
+    const mergedBrands = [...localBrands];
+    for (const defBrand of INITIAL_CATALOG_STATE.brands) {
+      if (!brandIds.has(defBrand.id) && !brandSlugs.has(defBrand.slug.trim().toLowerCase())) {
+        mergedBrands.push(defBrand);
+        brandIds.add(defBrand.id);
+        brandSlugs.add(defBrand.slug.trim().toLowerCase());
+      }
+    }
+
+    // Keep all local products first, then append baseline products only if local had none or SKU/slug/id is absent
+    const prodIds = new Set(localProducts.map((p) => p.id));
+    const prodSlugs = new Set(localProducts.map((p) => p.slug.trim().toLowerCase()));
+    const prodSkus = new Set(localProducts.map((p) => p.sku.trim().toUpperCase()));
+    const mergedProducts = [...localProducts];
+    if (localProducts.length === 0) {
+      for (const defProd of INITIAL_CATALOG_STATE.products) {
+        if (
+          !prodIds.has(defProd.id) &&
+          !prodSlugs.has(defProd.slug.trim().toLowerCase()) &&
+          !prodSkus.has(defProd.sku.trim().toUpperCase())
+        ) {
+          mergedProducts.push(defProd);
+        }
+      }
+    }
+
+    const cachedBusinessNumber = parsed.whatsappConfig?.businessNumber?.trim();
+    const cachedContactEmail = parsed.storeSettings?.contactEmail?.trim();
+    const cachedCityBase = parsed.storeSettings?.cityBase;
+    const cachedTagline = parsed.storeSettings?.tagline?.trim();
+
+    return {
+      hasLocalBackup: true,
+      state: {
+        ...INITIAL_CATALOG_STATE,
+        categories: mergedCategories,
+        brands: mergedBrands,
+        products: mergedProducts,
+        inquiryAnalytics: Array.isArray(parsed.inquiryAnalytics)
+          ? parsed.inquiryAnalytics
+          : INITIAL_CATALOG_STATE.inquiryAnalytics,
+        whatsappConfig: {
+          ...INITIAL_CATALOG_STATE.whatsappConfig,
+          ...(parsed.whatsappConfig || {}),
+          businessNumber: cachedBusinessNumber || INITIAL_CATALOG_STATE.whatsappConfig.businessNumber,
+        },
+        storeSettings: {
+          ...INITIAL_CATALOG_STATE.storeSettings,
+          ...(parsed.storeSettings || {}),
+          tagline: cachedTagline || INITIAL_CATALOG_STATE.storeSettings.tagline,
+          contactEmail: cachedContactEmail || INITIAL_CATALOG_STATE.storeSettings.contactEmail,
+          cityBase: cachedCityBase || INITIAL_CATALOG_STATE.storeSettings.cityBase,
+          socialLinks: {
+            ...INITIAL_CATALOG_STATE.storeSettings.socialLinks,
+            ...(parsed.storeSettings?.socialLinks || {}),
+          },
+        },
+      },
+    };
+  } catch {
+    return { state: INITIAL_CATALOG_STATE, hasLocalBackup: false };
+  }
 }
 
 class LocalSampleCatalogService implements ICatalogService {
@@ -122,62 +173,30 @@ class LocalSampleCatalogService implements ICatalogService {
       const cachedBusinessNumber = parsed.whatsappConfig?.businessNumber?.trim();
       const cachedContactEmail = parsed.storeSettings?.contactEmail?.trim();
       const cachedCityBase = parsed.storeSettings?.cityBase;
+      const cachedTagline = parsed.storeSettings?.tagline?.trim();
 
-      let categories = Array.isArray(parsed.categories)
-        ? parsed.categories
-        : INITIAL_CATALOG_STATE.categories;
-      let products = Array.isArray(parsed.products)
-        ? parsed.products
+      const categories =
+        Array.isArray(parsed.categories) && parsed.categories.length > 0
+          ? parsed.categories.map(normalizeCategory)
+          : INITIAL_CATALOG_STATE.categories;
+
+      const products = Array.isArray(parsed.products)
+        ? parsed.products.map(normalizeProduct)
         : INITIAL_CATALOG_STATE.products;
 
-      const hasLegacyCarsCat = categories.some(isLegacyCarsCategory);
-      const alreadyMigrated = window.localStorage.getItem(TAXONOMY_MIGRATION_KEY) === '1';
+      const brands =
+        Array.isArray(parsed.brands) && parsed.brands.length > 0
+          ? parsed.brands
+          : INITIAL_CATALOG_STATE.brands;
 
-      if (hasLegacyCarsCat || !alreadyMigrated) {
-        const legacyIds = new Set(categories.filter(isLegacyCarsCategory).map((c) => c.id));
-        legacyIds.add('cat-cars');
-
-        const cleanedCategories = categories.filter((c) => !isLegacyCarsCategory(c));
-        const newCategoryTemplates = INITIAL_CATALOG_STATE.categories.filter((c) =>
-          (NEW_RC_CATEGORY_IDS as readonly string[]).includes(c.id)
-        );
-        const missingNewCategories = newCategoryTemplates.filter(
-          (tmpl) =>
-            !cleanedCategories.some(
-              (existing) =>
-                existing.id === tmpl.id ||
-                existing.name.trim().toLowerCase() === tmpl.name.trim().toLowerCase()
-            )
-        );
-
-        categories = [...missingNewCategories, ...cleanedCategories];
-
-        const categoryIdByName = new Map(
-          categories.map((c) => [c.name.trim().toLowerCase(), c.id])
-        );
-
-        products = products.map((product) => {
-          const { warrantyInfo: _w, shippingInfo: _s, ...rest } = product;
-          if (!legacyIds.has(product.categoryId)) {
-            return rest;
-          }
-          const inferredId = inferNewRcCategoryId(product);
-          const matchedTemplate = newCategoryTemplates.find((c) => c.id === inferredId);
-          const resolvedId = matchedTemplate
-            ? categoryIdByName.get(matchedTemplate.name.trim().toLowerCase()) || matchedTemplate.id
-            : '';
-          return {
-            ...rest,
-            categoryId: resolvedId,
-          };
-        });
-      }
-
-      const hydrated: CatalogStoreState = {
+      return {
         ...INITIAL_CATALOG_STATE,
-        ...parsed,
         categories,
         products,
+        brands,
+        inquiryAnalytics: Array.isArray(parsed.inquiryAnalytics)
+          ? parsed.inquiryAnalytics
+          : INITIAL_CATALOG_STATE.inquiryAnalytics,
         whatsappConfig: {
           ...INITIAL_CATALOG_STATE.whatsappConfig,
           ...(parsed.whatsappConfig || {}),
@@ -186,24 +205,15 @@ class LocalSampleCatalogService implements ICatalogService {
         storeSettings: {
           ...INITIAL_CATALOG_STATE.storeSettings,
           ...(parsed.storeSettings || {}),
+          tagline: cachedTagline || INITIAL_CATALOG_STATE.storeSettings.tagline,
           contactEmail: cachedContactEmail || INITIAL_CATALOG_STATE.storeSettings.contactEmail,
-          cityBase:
-            !cachedCityBase || cachedCityBase === 'Lahore · Nationwide Pakistan Dispatch'
-              ? INITIAL_CATALOG_STATE.storeSettings.cityBase
-              : cachedCityBase,
+          cityBase: cachedCityBase || INITIAL_CATALOG_STATE.storeSettings.cityBase,
           socialLinks: {
             ...INITIAL_CATALOG_STATE.storeSettings.socialLinks,
             ...(parsed.storeSettings?.socialLinks || {}),
           },
         },
       };
-
-      if (hasLegacyCarsCat || !alreadyMigrated) {
-        this.saveState(hydrated);
-        window.localStorage.setItem(TAXONOMY_MIGRATION_KEY, '1');
-      }
-
-      return hydrated;
     } catch {
       return INITIAL_CATALOG_STATE;
     }
@@ -224,7 +234,6 @@ class LocalSampleCatalogService implements ICatalogService {
   resetToSampleData(): CatalogStoreState {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.setItem(TAXONOMY_MIGRATION_KEY, '1');
       this.lastStorageWarning = null;
     } catch {
       // Ignore storage errors
@@ -285,56 +294,6 @@ class LocalSampleCatalogService implements ICatalogService {
       ...state,
       brands: state.brands.filter((b) => b.id !== brandId),
     };
-    this.saveState(next);
-    return next;
-  }
-
-  upsertArticle(state: CatalogStoreState, article: LearningArticle): CatalogStoreState {
-    const exists = state.articles.some((a) => a.id === article.id);
-    const articles = exists
-      ? state.articles.map((a) => (a.id === article.id ? article : a))
-      : [article, ...state.articles];
-    const next = { ...state, articles };
-    this.saveState(next);
-    return next;
-  }
-
-  deleteArticle(state: CatalogStoreState, articleId: string): CatalogStoreState {
-    const next = {
-      ...state,
-      articles: state.articles.filter((a) => a.id !== articleId),
-    };
-    this.saveState(next);
-    return next;
-  }
-
-  upsertGalleryItem(state: CatalogStoreState, item: GalleryItem): CatalogStoreState {
-    const exists = state.gallery.some((g) => g.id === item.id);
-    const gallery = exists
-      ? state.gallery.map((g) => (g.id === item.id ? item : g))
-      : [item, ...state.gallery];
-    const next = { ...state, gallery };
-    this.saveState(next);
-    return next;
-  }
-
-  deleteGalleryItem(state: CatalogStoreState, itemId: string): CatalogStoreState {
-    const next = {
-      ...state,
-      gallery: state.gallery.filter((g) => g.id !== itemId),
-    };
-    this.saveState(next);
-    return next;
-  }
-
-  addCommunityPost(state: CatalogStoreState, post: CommunityPost): CatalogStoreState {
-    const next = { ...state, communityPosts: [post, ...state.communityPosts] };
-    this.saveState(next);
-    return next;
-  }
-
-  addReview(state: CatalogStoreState, review: CustomerReview): CatalogStoreState {
-    const next = { ...state, reviews: [review, ...state.reviews] };
     this.saveState(next);
     return next;
   }

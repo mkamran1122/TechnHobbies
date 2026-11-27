@@ -64,6 +64,11 @@
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
+        "subcategoryId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]*$"
+        },
         "sku": {
           "type": "string",
           "minLength": 1,
@@ -73,6 +78,9 @@
           "type": "number"
         },
         "originalPrice": {
+          "type": "number"
+        },
+        "discountPercentage": {
           "type": "number"
         },
         "stockStatus": {
@@ -103,7 +111,24 @@
           "type": "string",
           "maxLength": 5000
         },
+        "primaryImage": {
+          "type": "string",
+          "maxLength": 500
+        },
         "images": {
+          "type": "array"
+        },
+        "specs": {
+          "type": "array"
+        },
+        "whatsInBox": {
+          "type": "array"
+        },
+        "compatibility": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "variants": {
           "type": "array"
         },
         "updatedBy": {
@@ -133,8 +158,10 @@
         "condition",
         "featured",
         "published",
+        "archived",
         "shortDescription",
         "description",
+        "primaryImage",
         "images",
         "updatedBy",
         "createdAt",
@@ -143,7 +170,7 @@
     },
     "Category": {
       "title": "Category",
-      "description": "Catalog product category.",
+      "description": "Catalog product category with display order.",
       "type": "object",
       "properties": {
         "id": {
@@ -173,6 +200,14 @@
         "featured": {
           "type": "boolean"
         },
+        "displayOrder": {
+          "type": "number"
+        },
+        "parentId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]*$"
+        },
         "updatedBy": {
           "type": "string",
           "minLength": 1,
@@ -194,6 +229,7 @@
         "description",
         "image",
         "featured",
+        "displayOrder",
         "updatedBy",
         "createdAt",
         "updatedAt"
@@ -255,7 +291,7 @@
     },
     "StoreSettings": {
       "title": "StoreSettings",
-      "description": "Public storefront SEO, city dispatch label, and WhatsApp number settings.",
+      "description": "Public storefront SEO, city dispatch label, social links, and WhatsApp inquiry settings.",
       "type": "object",
       "properties": {
         "storeName": {
@@ -271,9 +307,32 @@
           "type": "string",
           "maxLength": 120
         },
+        "contactEmail": {
+          "type": "string",
+          "maxLength": 254
+        },
+        "socialLinks": {
+          "type": "object",
+          "description": "Map with string fields: instagram, youtube, facebook"
+        },
         "whatsappNumber": {
           "type": "string",
           "maxLength": 20
+        },
+        "defaultMessageTemplate": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "primaryButtonLabel": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "cardButtonLabel": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "showCardInquiryButton": {
+          "type": "boolean"
         },
         "seoTitle": {
           "type": "string",
@@ -301,13 +360,47 @@
         "storeName",
         "tagline",
         "cityBase",
+        "contactEmail",
+        "socialLinks",
         "whatsappNumber",
+        "defaultMessageTemplate",
+        "primaryButtonLabel",
+        "cardButtonLabel",
+        "showCardInquiryButton",
         "seoTitle",
         "seoDescription",
         "updatedBy",
         "createdAt",
         "updatedAt"
       ]
+    },
+    "AdminPrivateSettings": {
+      "title": "AdminPrivateSettings",
+      "description": "Private administrator-only preferences and migration tracking.",
+      "type": "object",
+      "properties": {
+        "trackLocalClicks": {
+          "type": "boolean"
+        },
+        "migratedAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "updatedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["trackLocalClicks", "updatedBy", "createdAt", "updatedAt"]
     },
     "AdminAuditLog": {
       "title": "AdminAuditLog",
@@ -341,7 +434,7 @@
       "schema": {
         "$ref": "#/entities/AdminAccount"
       },
-      "description": "Authorized TechnHobbies administrators."
+      "description": "Single authorized TechnHobbies administrator record (technhobbies268@gmail.com only; no promotion)."
     },
     "/products/{productId}": {
       "schema": {
@@ -361,11 +454,17 @@
       },
       "description": "TechnHobbies product brands."
     },
-    "/store_settings/{settingId}": {
+    "/store_settings/public": {
       "schema": {
         "$ref": "#/entities/StoreSettings"
       },
-      "description": "Public storefront display and WhatsApp inquiry settings."
+      "description": "Public storefront display, contact, and WhatsApp inquiry settings."
+    },
+    "/store_settings/admin_private": {
+      "schema": {
+        "$ref": "#/entities/AdminPrivateSettings"
+      },
+      "description": "Private administrator-only settings and migration status."
     },
     "/admin_logs/{logId}": {
       "schema": {

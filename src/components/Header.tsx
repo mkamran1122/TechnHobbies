@@ -66,11 +66,16 @@ export function Header({
             onClick={() => handleNav('home')}
             className="flex items-center gap-2 min-w-0 shrink-0 text-left min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 rounded"
           >
-            <img
-              src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
-              alt="TechnHobbies Logo"
-              className="w-8 h-8 sm:w-9 sm:h-9 object-contain shrink-0"
-            />
+            <picture className="shrink-0">
+              <source type="image/webp" srcSet="/assets/aistudio/TNH_Logo_PNG_99ea69a1.webp" />
+              <img
+                src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
+                alt="TechnHobbies Logo"
+                width={36}
+                height={36}
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain shrink-0"
+              />
+            </picture>
             <span className="font-display text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap">
               TechnHobbies
             </span>
@@ -198,11 +203,16 @@ export function Header({
           >
             <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <img
-                  src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
-                  alt="TechnHobbies Logo"
-                  className="w-7 h-7 object-contain shrink-0"
-                />
+                <picture className="shrink-0">
+                  <source type="image/webp" srcSet="/assets/aistudio/TNH_Logo_PNG_99ea69a1.webp" />
+                  <img
+                    src="/assets/aistudio/TNH_Logo_PNG_99ea69a1.png"
+                    alt="TechnHobbies Logo"
+                    width={28}
+                    height={28}
+                    className="w-7 h-7 object-contain shrink-0"
+                  />
+                </picture>
                 <span className="font-display text-base font-bold text-slate-900">
                   TechnHobbies Menu
                 </span>

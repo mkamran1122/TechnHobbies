@@ -6,18 +6,26 @@ import {
   type User,
 } from 'firebase/auth';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { ADMIN_EMAIL, auth, isAuthorizedAdminUser } from '../firebase';
+import {
+  ADMIN_EMAIL,
+  auth,
+  isAuthorizedAdminEmail,
+  isAuthorizedAdminUser,
+  persistenceReady,
+} from '../firebase';
+import { ensureAdminProfileAndLog } from '../services/firestoreCatalogService';
 
 interface AuthContextValue {
   user: User | null;
   isAdmin: boolean;
+  needsEmailVerification: boolean;
   authLoading: boolean;
   authNotice: string | null;
   clearAuthNotice: () => void;
   signInAdmin: (email: string, password: string) => Promise<void>;
   logoutAdmin: () => Promise<void>;
   sendVerification: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -53,12 +61,13 @@ function mapFirebaseAuthError(error: unknown): string {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [, setAuthVersion] = useState(0);
   const [authLoading, setAuthLoading] = useState(true);
   const [authNotice, setAuthNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser && !isAuthorizedAdminUser(currentUser)) {
+      if (currentUser && !isAuthorizedAdminEmail(currentUser)) {
         try {
           await signOut(auth);
         } catch {
@@ -92,8 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      await persistenceReady;
       const credential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
-      if (!isAuthorizedAdminUser(credential.user)) {
+      if (!isAuthorizedAdminEmail(credential.user)) {
         await signOut(auth);
         throw new Error(
           `Access denied. Only ${ADMIN_EMAIL} is authorized to access the TechnHobbies Admin Dashboard.`
@@ -101,12 +111,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setAuthNotice(null);
       setUser(credential.user);
+      if (credential.user.emailVerified) {
+        void ensureAdminProfileAndLog(credential.user, 'ADMIN_LOGIN');
+      }
     } catch (error) {
       throw new Error(mapFirebaseAuthError(error));
     }
   }, []);
 
   const logoutAdmin = useCallback(async () => {
+    if (isAuthorizedAdminUser(auth.currentUser)) {
+      await ensureAdminProfileAndLog(auth.currentUser!, 'ADMIN_LOGOUT').catch(() => undefined);
+    }
     await signOut(auth);
     setUser(null);
   }, []);
@@ -116,10 +132,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendEmailVerification(auth.currentUser);
   }, []);
 
-  const refreshUser = useCallback(async () => {
-    if (!auth.currentUser) return;
+  const refreshUser = useCallback(async (): Promise<boolean> => {
+    if (!auth.currentUser) return false;
     await auth.currentUser.reload();
-    setUser(auth.currentUser ? ({ ...auth.currentUser } as User) : null);
+    await auth.currentUser.getIdToken(true);
+    const reloaded = auth.currentUser;
+    setUser(reloaded);
+    setAuthVersion((v) => v + 1);
+    if (reloaded && isAuthorizedAdminUser(reloaded)) {
+      void ensureAdminProfileAndLog(reloaded, 'ADMIN_LOGIN');
+      return true;
+    }
+    return false;
   }, []);
 
   return (
@@ -127,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAdmin: isAuthorizedAdminUser(user),
+        needsEmailVerification: Boolean(user && isAuthorizedAdminEmail(user) && !user.emailVerified),
         authLoading,
         authNotice,
         clearAuthNotice,

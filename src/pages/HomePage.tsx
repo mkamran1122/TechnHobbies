@@ -4,6 +4,7 @@ import { ProductCard } from '../components/ProductCard';
 import { ResilientImage } from '../components/ResilientImage';
 import { HERO_IMAGE } from '../data/sampleCatalog';
 import type { Category, Product, WhatsAppConfig } from '../types/catalog';
+import { getChildCategories, getTopLevelCategories } from '../utils/categoryTree';
 import type { AppRoute } from '../utils/routing';
 
 interface HomePageProps {
@@ -27,11 +28,13 @@ const CATEGORY_SLIDER_PX_PER_SEC = 24;
 
 function CategoryTile({
   category,
+  subcategoryCount = 0,
   onSelect,
   className = '',
   tabIndex,
 }: {
   category: Category;
+  subcategoryCount?: number;
   onSelect: () => void;
   className?: string;
   tabIndex?: number;
@@ -49,6 +52,7 @@ function CategoryTile({
             src={category.image}
             alt={category.name}
             fallbackLabel={category.name}
+            sizes="(max-width: 639px) 184px, (max-width: 1023px) 33vw, 25vw"
             className="w-full h-full object-cover"
           />
         </div>
@@ -57,6 +61,11 @@ function CategoryTile({
         <h3 className="text-[13px] sm:text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
           {category.name}
         </h3>
+        {subcategoryCount > 0 && (
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {subcategoryCount} subcategor{subcategoryCount === 1 ? 'y' : 'ies'}
+          </p>
+        )}
       </div>
     </button>
   );
@@ -64,9 +73,11 @@ function CategoryTile({
 
 function MobileCategorySlider({
   categories,
+  allCategories,
   onSelectCategory,
 }: {
   categories: Category[];
+  allCategories: Category[];
   onSelectCategory: (categoryId: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -209,6 +220,7 @@ function MobileCategorySlider({
             <CategoryTile
               key={category.id}
               category={category}
+              subcategoryCount={getChildCategories(category.id, allCategories).length}
               onSelect={() => onSelectCategory(category.id)}
               className="w-[42vw] min-w-[154px] max-w-[184px] shrink-0"
             />
@@ -221,6 +233,7 @@ function MobileCategorySlider({
               <CategoryTile
                 key={`${category.id}-loop`}
                 category={category}
+                subcategoryCount={getChildCategories(category.id, allCategories).length}
                 tabIndex={-1}
                 onSelect={() => onSelectCategory(category.id)}
                 className="w-[42vw] min-w-[154px] max-w-[184px] shrink-0"
@@ -249,6 +262,7 @@ export function HomePage({
     featuredProducts.length >= 6
       ? featuredProducts.slice(0, 8)
       : publishedProducts.slice(0, 8);
+  const topLevelCategories = getTopLevelCategories(categories);
 
   return (
     <div className="bg-white">
@@ -283,6 +297,7 @@ export function HomePage({
                 src={HERO_IMAGE}
                 alt="RC monster truck and FPV quadcopter hardware"
                 fallbackLabel="TechnHobbies RC Gear"
+                sizes="(max-width: 639px) 96px, 256px"
                 className="w-full h-full object-cover"
                 priority
               />
@@ -307,18 +322,30 @@ export function HomePage({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-          {displayedProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              whatsappConfig={whatsappConfig}
-              onSelectProduct={onSelectProduct}
-              onTrackWhatsAppClick={onTrackWhatsAppClick}
-              onUnconfiguredWhatsApp={onUnconfiguredWhatsApp}
-            />
-          ))}
-        </div>
+        {displayedProducts.length === 0 ? (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
+            <p className="text-sm font-medium text-slate-700">
+              No published products in the storefront catalog yet.
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Sign in as admin to publish products or migrate the initial catalog to Cloud Firestore.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {displayedProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                whatsappConfig={whatsappConfig}
+                priority={index < 2}
+                onSelectProduct={onSelectProduct}
+                onTrackWhatsAppClick={onTrackWhatsAppClick}
+                onUnconfiguredWhatsApp={onUnconfiguredWhatsApp}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 5. Simple Categories Section (Mobile Auto-Slider + Unchanged Desktop Grid) */}
@@ -338,17 +365,30 @@ export function HomePage({
             </button>
           </div>
 
-          <MobileCategorySlider categories={categories} onSelectCategory={onSelectCategory} />
-
-          <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-            {categories.map((category) => (
-              <CategoryTile
-                key={category.id}
-                category={category}
-                onSelect={() => onSelectCategory(category.id)}
+          {topLevelCategories.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs sm:text-sm text-slate-500">
+              No categories configured yet.
+            </div>
+          ) : (
+            <>
+              <MobileCategorySlider
+                categories={topLevelCategories}
+                allCategories={categories}
+                onSelectCategory={onSelectCategory}
               />
-            ))}
-          </div>
+
+              <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+                {topLevelCategories.map((category) => (
+                  <CategoryTile
+                    key={category.id}
+                    category={category}
+                    subcategoryCount={getChildCategories(category.id, categories).length}
+                    onSelect={() => onSelectCategory(category.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </section>
 
